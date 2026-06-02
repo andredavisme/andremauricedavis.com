@@ -485,48 +485,50 @@
     import { requireAuth, signOut } from './js/amd-auth.js';
     import { loadPosts, setActivePlatform } from './js/amd-feed.js';
 
-    // Auth gate
-    const user = await requireAuth();
-    if (!user) return; // redirected
+    (async () => {
+      // Auth gate
+      const user = await requireAuth();
+      if (!user) return; // redirected to login.html
 
-    document.getElementById('auth-gate').style.display = 'none';
+      document.getElementById('auth-gate').style.display = 'none';
 
-    // Populate nav user
-    const session = window.amdSession;
-    const meta    = session?.user?.user_metadata;
-    if (meta) {
-      document.getElementById('nav-user').innerHTML = `
-        ${meta.avatar_url ? `<img class="nav-avatar" src="${meta.avatar_url}" alt="">` : ''}
-        <span>${meta.full_name ?? 'Member'}</span>
-      `;
-    }
+      // Populate nav user
+      const session = window.amdSession;
+      const meta    = session?.user?.user_metadata;
+      if (meta) {
+        document.getElementById('nav-user').innerHTML = `
+          ${meta.avatar_url ? `<img class="nav-avatar" src="${meta.avatar_url}" alt="">` : ''}
+          <span>${meta.full_name ?? 'Member'}</span>
+        `;
+      }
 
-    // Sign out
-    document.getElementById('sign-out-btn').addEventListener('click', signOut);
+      // Sign out
+      document.getElementById('sign-out-btn').addEventListener('click', signOut);
 
-    // Theme toggle
-    const html   = document.documentElement;
-    const toggle = document.getElementById('theme-toggle');
-    const saved  = localStorage.getItem('amd-theme') ?? 'light';
-    html.setAttribute('data-theme', saved);
-    toggle.textContent = saved === 'dark' ? '☀️' : '🌙';
-    toggle.addEventListener('click', () => {
-      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      html.setAttribute('data-theme', next);
-      localStorage.setItem('amd-theme', next);
-      toggle.textContent = next === 'dark' ? '☀️' : '🌙';
-    });
+      // Theme toggle
+      const html   = document.documentElement;
+      const toggle = document.getElementById('theme-toggle');
+      const saved  = localStorage.getItem('amd-theme') ?? 'light';
+      html.setAttribute('data-theme', saved);
+      toggle.textContent = saved === 'dark' ? '☀️' : '🌙';
+      toggle.addEventListener('click', () => {
+        const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('amd-theme', next);
+        toggle.textContent = next === 'dark' ? '☀️' : '🌙';
+      });
 
-    // Filter buttons
-    document.querySelectorAll('.feed-filter-btn').forEach(btn => {
-      btn.addEventListener('click', () => setActivePlatform(btn.dataset.platform));
-    });
+      // Filter buttons
+      document.querySelectorAll('.feed-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => setActivePlatform(btn.dataset.platform));
+      });
 
-    // Load more button
-    document.getElementById('feed-load-more').addEventListener('click', () => loadPosts());
+      // Load more button
+      document.getElementById('feed-load-more').addEventListener('click', () => loadPosts());
 
-    // Initial load
-    loadPosts();
+      // Initial load
+      loadPosts();
+    })();
   </script>
 
 </body>

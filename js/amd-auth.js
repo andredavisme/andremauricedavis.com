@@ -10,7 +10,11 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL = 'https://hhyhulqngdkwsxhymmcd.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_haKvwV0M7KMj4Qz69M6WGg_KmIfU-aI';
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+// storageKey namespaces this app's auth tokens away from other projects
+// sharing the same Supabase instance, preventing cross-app token bleed.
+export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { storageKey: 'amd-platform-auth' },
+});
 
 /**
  * Call on every protected page.
@@ -26,7 +30,7 @@ export async function requireAuth() {
 
   window.amdSession = session;
 
-  // Upsert amd_users row (creates on first login, updates last seen)
+  // Upsert amd_users row (creates on first login, updates on return)
   const { data: user, error } = await supabase
     .from('amd_users')
     .upsert(
