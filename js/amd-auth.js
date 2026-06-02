@@ -10,9 +10,12 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL = 'https://hhyhulqngdkwsxhymmcd.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_haKvwV0M7KMj4Qz69M6WGg_KmIfU-aI';
 
-// Derive base path so redirects work on both GitHub Pages (/andremauricedavis.com/)
-// and a future root domain (andremauricedavis.com/).
-const BASE = window.location.pathname.replace(/\/[^/]*$/, '') || '.';
+// BASE_PATH handles the GitHub Pages subpath.
+// GitHub Pages: andredavisme.github.io/andremauricedavis.com  → '/andremauricedavis.com'
+// Production:   andremauricedavis.com                         → ''
+const BASE_PATH = window.location.hostname === 'andredavisme.github.io'
+  ? '/andremauricedavis.com'
+  : '';
 
 // storageKey namespaces auth tokens away from other projects on the same Supabase instance.
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
@@ -27,7 +30,7 @@ export async function requireAuth() {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
-    window.location.href = BASE + '/login.html';
+    window.location.href = BASE_PATH + '/login.html';
     return null;
   }
 
@@ -65,7 +68,7 @@ export async function signInWithGoogle() {
   await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin + BASE + '/feed.html',
+      redirectTo: window.location.origin + BASE_PATH + '/feed.html',
     },
   });
 }
@@ -75,5 +78,5 @@ export async function signInWithGoogle() {
  */
 export async function signOut() {
   await supabase.auth.signOut();
-  window.location.href = BASE + '/login.html';
+  window.location.href = BASE_PATH + '/login.html';
 }
