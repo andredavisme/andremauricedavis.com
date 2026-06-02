@@ -41,6 +41,24 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 
 ---
 
+## Agent Protocol
+
+Rules every agent must follow throughout a session, in addition to reading this document at session start and updating it at session close.
+
+### File Push Verification
+
+**After any file is pushed — whether by agent API call or manual upload — always verify via the commit log, not by re-reading file content.**
+
+- ✅ Use `list_commits` to confirm the most recent commit message and timestamp match the expected push
+- ✅ If re-reading a file is necessary, check the `size` field: a suspiciously small file (e.g., <100 bytes) after a known large push indicates a stale cache or failed upload
+- ✅ If file content appears stale after a confirmed commit exists, trust the commit — the API blob cache lags behind the web UI by up to ~60 seconds
+- ❌ Do not re-read file content as the sole confirmation of a successful push
+- ❌ Do not trigger user troubleshooting based on stale file content alone — check the commit log first
+
+> **Why this exists:** On 2026-06-02 (Session 004), a manual upload of `design-test.html` (534KB) landed successfully but the API returned stale placeholder content for ~2 minutes after the commit was confirmed. The agent incorrectly initiated a troubleshooting sequence that required user involvement to resolve. This rule prevents that pattern.
+
+---
+
 ## Session Log
 
 ---
@@ -189,7 +207,7 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
   - Section 04: Logo mark (all sizes, wordmark, on-dark)
   - Section 05: Component sampler (buttons ×4, badges ×6, feed card, admin stat cards ×3, form inputs)
   - Section 06: Accent color swatches (amber + orange ranges)
-  - Section 07: Data visualization examples (trend line, grouped bar, donut — all in Ember palette, embedded as base64 PNGs)
+  - Section 07: Data visualization examples (trend line, grouped bar, donut — all in Ember palette, embedded as base64 JPEGs)
 - [x] Generated 3 canonical chart examples in Python/Plotly using AMD Ember palette
 - [x] Updated `TUTORIAL.md` — added Chapter 4 (Design-First philosophy: the why, the 6-step workflow, CSS custom properties, fluid typography, viz color system)
 - [x] Updated `HANDOFF.md` — Session 003 fully documented and closed
@@ -210,7 +228,40 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 
 #### Tasks Left Open (carried to Session 004)
 
-- [ ] Push `design-test.html` to the GitHub repo (currently delivered as a local file artifact — needs a `git push` or `create_or_update_file` call at session start)
+- [ ] Push `design-test.html` to the GitHub repo
+- [ ] Schema data inventory — audit `amd_posts` and `amd_content_sources` against design proof requirements
+- [ ] Build the public-facing content feed page (`feed.html` or integrated into `index.html`)
+- [ ] Build the admin panel shell (`admin.html`)
+- [ ] Build the discussion thread view
+- [ ] Configure GitHub Pages custom domain (CNAME file → Hostinger DNS update)
+- [ ] Decide on content source priority order (API vs RSS vs programmatic vs manual) per platform
+- [ ] Google OAuth setup (Supabase Auth provider configuration)
+
+#### Relevant Links
+
+- Tutorial (Chapter 4 added): https://github.com/andredavisme/andremauricedavis.com/blob/main/TUTORIAL.md
+- Commit (Tutorial Chapter 4): https://github.com/andredavisme/andremauricedavis.com/commit/d3f4eac3d25fc8cb655517572bc65252c59b18a9
+- Supabase Dashboard: https://supabase.com/dashboard/project/hhyhulqngdkwsxhymmcd
+
+---
+
+### Session 004 — Push design-test.html + Agent Protocol
+
+**Date:** 2026-06-02
+**Session opened:** 4:03 PM EDT
+**Session closed:** ongoing
+
+#### Decisions Made
+
+- **File push verification protocol:** After any file push, agents must verify via `list_commits` (commit message + timestamp), not by re-reading file content. File blob API can lag up to ~60 seconds behind the web UI. Full rule documented in the Agent Protocol section above.
+
+#### Tasks Completed
+
+- [x] Pushed `design-test.html` to repo root — all 7 sections including Section 07 canonical charts (base64 JPEG embedded). Confirmed via commit [`4062d4b`](https://github.com/andredavisme/andremauricedavis.com/commit/4062d4b47de15cf8d1ac45247c60fc1994f159ca)
+- [x] Added **Agent Protocol** section to `HANDOFF.md` — file push verification rule with context note
+
+#### Tasks Left Open (carried to Session 005)
+
 - [ ] Schema data inventory — audit `amd_posts` and `amd_content_sources` against design proof requirements (e.g., `image_url`, `color`/`theme_key` for source badge, `reply_count` strategy)
 - [ ] Build the public-facing content feed page (`feed.html` or integrated into `index.html`)
 - [ ] Build the admin panel shell (`admin.html`)
@@ -221,10 +272,8 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 
 #### Relevant Links
 
-- Design Proof (local artifact this session): `design-test.html` — needs to be pushed to repo
-- Tutorial (Chapter 4 added): https://github.com/andredavisme/andremauricedavis.com/blob/main/TUTORIAL.md
-- Commit (Tutorial Chapter 4): https://github.com/andredavisme/andremauricedavis.com/commit/d3f4eac3d25fc8cb655517572bc65252c59b18a9
-- Supabase Dashboard: https://supabase.com/dashboard/project/hhyhulqngdkwsxhymmcd
+- design-test.html: https://github.com/andredavisme/andremauricedavis.com/blob/main/design-test.html
+- Confirming commit: https://github.com/andredavisme/andremauricedavis.com/commit/4062d4b47de15cf8d1ac45247c60fc1994f159ca
 
 ---
 
@@ -235,8 +284,9 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 | 001 | 2026-06-02 | 10:26 AM EDT | 10:35 AM EDT | ~9 min | ~9 min |
 | 002 | 2026-06-02 | 11:42 AM EDT | 12:04 PM EDT | ~22 min | ~22 min |
 | 003 | 2026-06-02 | 3:25 PM EDT | 3:44 PM EDT | ~19 min | ~19 min |
-| **Total** | | | | **~50 min** | **~50 min** |
+| 004 | 2026-06-02 | 4:03 PM EDT | ongoing | ~ongoing | ~ongoing |
+| **Total** | | | | **~50 min + Session 004** | |
 
 ---
 
-*Last updated: 2026-06-02 by agent — Session 003 closed.*
+*Last updated: 2026-06-02 by agent — Session 004 in progress.*
