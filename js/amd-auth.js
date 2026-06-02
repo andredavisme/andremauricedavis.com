@@ -1,7 +1,7 @@
 /**
  * amd-auth.js
  * Google OAuth gate shared across all AMD platform pages.
- * Redirects unauthenticated users to /login.html.
+ * Redirects unauthenticated users to login.html.
  * Exposes: window.amdSession (Supabase session), window.amdUser (amd_users row)
  */
 
@@ -10,8 +10,11 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL = 'https://hhyhulqngdkwsxhymmcd.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_haKvwV0M7KMj4Qz69M6WGg_KmIfU-aI';
 
-// storageKey namespaces this app's auth tokens away from other projects
-// sharing the same Supabase instance, preventing cross-app token bleed.
+// Derive base path so redirects work on both GitHub Pages (/andremauricedavis.com/)
+// and a future root domain (andremauricedavis.com/).
+const BASE = window.location.pathname.replace(/\/[^/]*$/, '') || '.';
+
+// storageKey namespaces auth tokens away from other projects on the same Supabase instance.
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { storageKey: 'amd-platform-auth' },
 });
@@ -24,7 +27,7 @@ export async function requireAuth() {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
-    window.location.href = '/login.html';
+    window.location.href = BASE + '/login.html';
     return null;
   }
 
@@ -62,7 +65,7 @@ export async function signInWithGoogle() {
   await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin + '/feed.html',
+      redirectTo: window.location.origin + BASE + '/feed.html',
     },
   });
 }
@@ -72,5 +75,5 @@ export async function signInWithGoogle() {
  */
 export async function signOut() {
   await supabase.auth.signOut();
-  window.location.href = '/login.html';
+  window.location.href = BASE + '/login.html';
 }
