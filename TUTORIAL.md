@@ -288,16 +288,176 @@ This is an example of a general principle: **the absence of a policy is a securi
 
 ---
 
+## Chapter 4 — Design First: Building to User Expectation (Session 003)
+
+### The Core Principle: Start With the End Experience
+
+Most first-time builders make the same mistake: they build the backend first — the database, the API, the import pipeline — and then figure out what the frontend needs to look like afterward. The result is a platform that works technically but feels like it was designed by the database, not by a human.
+
+The correct order is the reverse: **design the experience you want users to have first, then build the backend to serve it.**
+
+This is not just an aesthetic preference. It has direct technical consequences. When you design first, you discover what data you actually need before you write a single line of backend code. You find out that the feed card needs a post thumbnail, a source badge, a truncated excerpt, and a reply count — and that informs exactly what columns your `amd_posts` table needs to expose. Nothing more, nothing less.
+
+Design first is a form of **requirement gathering through visual thinking**. It externalizes your assumptions about the user experience so they can be tested, challenged, and refined *before* they are baked into infrastructure.
+
+Think of it this way: if you build a house and realize after the walls are up that the kitchen should have been on the other side, moving it is expensive. But if you realize that on a floor plan, it costs nothing.
+
+### What Is a Design System?
+
+A **design system** is a collection of reusable decisions — colors, fonts, spacing, component shapes — that define how every part of a platform looks and behaves. It is not a finished design; it is the *vocabulary* that all finished designs will be written in.
+
+The analogy: a design system is a set of Lego brick molds. Individual pages are built from those bricks. If every brick follows the same mold, the pages feel cohesive. If each developer invents their own brick shapes, the platform feels fragmented and unprofessional — even if every individual piece works.
+
+Our design system for this platform is called **AMD Ember**. It consists of:
+
+| Token Category | Decision Made |
+|---|---|
+| **Color palette** | Warm off-white surfaces; amber (`#c97b12`) as primary accent; warm orange (`#d95e1a`) as secondary |
+| **Typography** | Instrument Serif for display headings and editorial content titles; Work Sans for all UI, body copy, labels, and buttons |
+| **Spacing scale** | A fixed set of spacing values (0.25rem to 8rem) — all spacing in the platform uses only these values |
+| **Type scale** | A fixed set of font sizes using `clamp()` — they scale fluidly with viewport width |
+| **Component shapes** | Border radii, shadow depths, button and badge styles |
+| **Data visualization** | A fixed color order for charts, ensuring all analytics visuals feel like they belong to the same system |
+
+Every one of these is defined as a **CSS custom property** (also called a CSS variable). This means the entire platform can be reskinned by changing values in one place, and dark mode is handled automatically by redefining those variables under a different selector.
+
+### What Is a Design Proof?
+
+A **design proof** (also called a design token test or a style tile) is a single HTML file that demonstrates all of the design system's decisions in one place — *before any real pages are built*.
+
+It is not a mockup of a real page. It is a catalog: here are the surface layers, here are the fonts at every size, here is what a feed card looks like, here is what a button looks like in every state, here is how a chart is styled. Think of it as the swatchbook a painter shows you before they pick up a brush.
+
+We built `design-test.html` as our design proof. It contains seven sections:
+
+| Section | What It Demonstrates |
+|---|---|
+| Surface Layers | The six background depths, from page background to active state |
+| Type Specimen | Every font size and weight, clearly labeled with its CSS variable |
+| Text Contrast | Body text, muted text, and faint text on each surface — verifying readability |
+| Logo Mark | The AMD "A with ember spark" mark at all sizes and on dark backgrounds |
+| Component Sampler | Buttons, badges, form inputs, feed post card, admin stat cards |
+| Accent Color Range | The full amber and orange swatch ranges with hover/active/highlight variants |
+| Data Visualization | Three canonical chart types (trend line, grouped bar, donut) styled in the Ember palette |
+
+The design proof lives in the repository alongside the rest of the codebase. Any future agent, developer, or collaborator who works on this project can open it in a browser and immediately understand the entire visual language of the platform.
+
+### Why Design Before the Database Is "Finished"?
+
+The database schema we built in Session 002 was intentionally minimal — just enough structure to support the core data model. Design first reveals what we *actually* need from it.
+
+Here is a concrete example. Until we designed the feed card component, we could not know:
+- Does the feed card show a thumbnail image? If yes, `amd_posts` needs an `image_url` column.
+- Does it show a reply count? If yes, either `amd_posts` needs a denormalized `reply_count` column, or the frontend needs to query `amd_discussion_posts` every time it renders a card (slower and more complex).
+- Does it show the source platform as a colored badge? If yes, `amd_content_sources` needs a `color` or `theme_key` column so the badge can render correctly without hardcoding platform names in the CSS.
+
+None of these questions can be answered from the database alone. They can only be answered by looking at the actual experience a user will have and working backward.
+
+This is the practice: **design what the user sees, then inventory what data each element requires, then verify that the schema supports it — and extend it where it doesn't.**
+
+### How to Do It: The Design-First Workflow
+
+Here is the step-by-step process we follow on this project:
+
+**Step 1: Define the user's goal for each view.**
+Before drawing anything, state in plain English what a user is trying to accomplish. For the feed: "A logged-in user wants to browse recent content from all platforms and find something worth discussing." This statement will act as a filter — any design element that doesn't serve that goal gets cut.
+
+**Step 2: Sketch the information hierarchy.**
+What does the user need to see first, second, third? For the feed card: (1) what the post is about, (2) where it came from, (3) how active the discussion is. Order drives layout. The most important thing gets the most visual weight.
+
+**Step 3: Build the design proof.**
+Translate the hierarchy into actual HTML and CSS using the design system tokens. No fake data yet — just real components with placeholder content. This is where typography, spacing, and color are tested at real scale in a real browser.
+
+**Step 4: Inventory the data requirements.**
+For each element in the proof, list the exact field it needs from the database. Feed card title → `amd_posts.title`. Source badge color → `amd_content_sources.color`. Reply count → aggregate of `amd_discussion_posts` where `status = 'approved'`. This inventory becomes a checklist against the existing schema.
+
+**Step 5: Reconcile with the schema.**
+Compare the inventory against what the current migrations have already created. For anything missing, write a new migration to add it. For anything in the schema that no component needs — leave it alone, it may be needed later. Never delete schema you haven't proven is useless.
+
+**Step 6: Build the backend to match.**
+Now write the backend logic — API queries, import transformations, data shapes — with the exact field names and structures the frontend already expects. The frontend is the contract; the backend fulfills it.
+
+### Why This Order Protects You
+
+When you build backend-first, there is a natural psychological pull to use whatever data you have. The database has a `raw_content` text blob? The frontend ends up showing that blob because it's easy. The database has a numeric `engagement_score`? The frontend gets a number instead of the meaningful breakdown that would actually tell users something.
+
+Design-first inverts this. The frontend is built around what is *useful to the human*, not what is *convenient to the database*. The backend is then forced to do the work of transforming raw data into the shape that the human experience requires.
+
+This is not extra work — it is the work done in the right order. The total effort is the same. The outcome is dramatically different.
+
+### What Is a CSS Custom Property (Design Token)?
+
+The design system stores every reusable value as a **CSS custom property**, declared in the `:root` selector so it is available everywhere in the stylesheet. Here is a simplified example:
+
+```css
+:root {
+  --color-primary: #c97b12;   /* amber */
+  --font-display:  'Instrument Serif', Georgia, serif;
+  --space-4:       1rem;
+  --radius-md:     0.5rem;
+}
+```
+
+Anywhere in the CSS you want the primary amber color, you write `var(--color-primary)` instead of the hex value. This means:
+- If the color needs to change, you change it in one place and every component updates
+- Dark mode is handled by redefining the same variables under `[data-theme="dark"]` — the components themselves don't change at all
+- Any developer working on the project can read `var(--color-primary)` and immediately understand what they're looking at, without needing to decode a hex code
+
+This is what separates a design *system* from a design *file*. A design file stores decisions as static values. A design system stores them as living references that every component is built from.
+
+### What Is `clamp()` and Why Does the Type Scale Use It?
+
+Every font size in our design system is defined using `clamp()`, a CSS function that takes three values: a minimum, a preferred, and a maximum.
+
+```css
+--text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+```
+
+This means:
+- **Minimum:** the font will never be smaller than `1.5rem` (24px), no matter how narrow the viewport
+- **Preferred:** it will scale fluidly based on viewport width (`1.2rem + 1.25vw`)
+- **Maximum:** it will never be larger than `2.25rem` (36px), no matter how wide the viewport
+
+The result is typography that looks correct on a phone, a tablet, and a wide desktop monitor without writing separate CSS for each screen size. The scale is built once and works everywhere.
+
+This technique is called **fluid typography** and it is one of the most important advances in modern CSS. It eliminates the need for awkward breakpoints just to control font sizes.
+
+### The Data Visualization Layer
+
+Charts and analytics visualizations are part of the user experience — they are not a separate concern. We defined the visualization style in the design proof at the same stage as buttons and typography, not as an afterthought.
+
+The AMD Ember chart palette follows a fixed color order:
+
+| Order | Color | Role |
+|---|---|---|
+| 1 | Amber `#c97b12` | Primary series, most important metric |
+| 2 | Orange `#d95e1a` | Secondary series |
+| 3 | Gold `#e8a030` | Tertiary series |
+| 4 | Rust `#b04010` | Quaternary series |
+| 5 | Brown `#7d4904` | Fifth series |
+| 6 | Success green `#3d7a2a` | Positive states, approval metrics |
+| 7 | Notification purple `#8b4fd8` | Admin/special callouts |
+| 8 | Muted `#8c8070` | Background/reference series |
+
+Every chart published by the admin will use this color order. This means a reader who sees multiple charts on the platform will learn to associate amber with YouTube, orange with Reddit, and so on — because the color order is consistent. That consistency is not accidental; it is designed.
+
+Three canonical chart types are approved for use on this platform:
+- **Trend line** — for activity over time, user growth, import frequency
+- **Grouped bar** — for platform comparisons, cohort analysis, moderation metrics
+- **Donut** — for composition breakdowns (content type mix, source breakdown, cohort share)
+
+Any other chart type requires explicit justification before being introduced, to prevent the admin panel from becoming a visual zoo of inconsistent formats.
+
+---
+
 ## Upcoming Chapters (To Be Written)
 
-- **Chapter 4 — The Design System** — visual tokens, color, typography
-- **Chapter 5 — The Content Feed** — building the public-facing feed
-- **Chapter 6 — Discussion Threads** — tying conversations to content
-- **Chapter 7 — User Authentication** — Google OAuth + UUID tracking
+- **Chapter 5 — The Content Feed** — building the public-facing feed from design proof to working HTML
+- **Chapter 6 — Discussion Threads** — tying conversations to content, moderation flow
+- **Chapter 7 — User Authentication** — Google OAuth + UUID tracking, no email storage
 - **Chapter 8 — The Admin Panel** — importing, moderating, analyzing
 - **Chapter 9 — Community Analytics** — cohorts, visualizations, critical thinking tools
 - **Chapter 10 — Going Live** — pointing the domain, replacing the Hostinger files
 
 ---
 
-*Last updated: 2026-06-02 — Session 002 (Chapters 2 & 3 added)*
+*Last updated: 2026-06-02 — Session 003 (Chapter 4 added — Design First philosophy and design system proof)*
