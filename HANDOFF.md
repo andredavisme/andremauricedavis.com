@@ -91,13 +91,63 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 
 ---
 
+### Session 002 — Initial Database Schema
+
+**Date:** 2026-06-02
+**Session opened:** 11:42 AM EDT
+**Session closed:** (open)
+**Active working time:** (in progress)
+
+#### Decisions Made
+
+- **Schema tables:** 6 core tables created under `amd_` prefix: `amd_content_sources`, `amd_posts`, `amd_users`, `amd_discussion_threads`, `amd_discussion_posts`, `amd_import_log`
+- **RLS:** Enabled on all 6 tables from the start. Initial policies: authenticated users can read published posts, open threads, approved discussion posts; users can insert pending comments; users can read/update their own record
+- **Admin RLS policies:** Deferred to a future migration — will use a helper function checking `amd_users.role = 'admin'` tied to `auth.uid()`
+- **Duplicate UUID detection:** `amd_users.suspected_duplicate_of` (self-referencing FK) + `duplicate_confidence` (low/medium/high) — admin-managed, no automatic confirmation
+- **updated_at automation:** Shared trigger function `amd_set_updated_at()` applied to all tables with `updated_at` column
+- **Post approval flow:** `amd_posts.is_published` (admin toggles) → `amd_discussion_threads` auto-associated → `amd_discussion_posts.status` (pending → approved/rejected by admin)
+- **Import audit:** `amd_import_log` tracks every import attempt: source, trigger type, rows fetched/inserted/skipped, errors
+- **attributes JSONB:** Both `amd_posts` and `amd_discussion_posts` carry a GIN-indexed `attributes` JSONB column for flexible cohort analysis metadata
+
+#### Tasks Completed
+
+- [x] Audited existing public schema — confirmed no `amd_` table conflicts
+- [x] Applied migration `amd_initial_schema` — 6 tables, indexes, triggers, RLS policies
+
+#### Table Summary
+
+| Table | Purpose |
+|---|---|
+| `amd_content_sources` | Social platform source configs (Facebook, Reddit, LinkedIn, YouTube) |
+| `amd_posts` | Canonical content feed — one row per imported post, admin-published |
+| `amd_users` | Platform users — UUID-based, Google OAuth, duplicate awareness |
+| `amd_discussion_threads` | One thread per published post |
+| `amd_discussion_posts` | User comments — pending/approved/rejected moderation flow |
+| `amd_import_log` | Append-only audit log for all import events |
+
+#### Tasks Left Open
+
+- [ ] Admin RLS policies migration — function checking `amd_users.role = 'admin'` for full CRUD on all tables
+- [ ] Design system proof (`design-test.html`) — establish visual tokens before building
+- [ ] Build full platform frontend (feed, discussion board, admin panel, auth)
+- [ ] Configure GitHub Pages custom domain (CNAME file → Hostinger DNS update)
+- [ ] Decide on content source priority order (API vs RSS vs programmatic vs manual) per platform
+
+#### Relevant Links
+
+- Supabase Dashboard: https://supabase.com/dashboard/project/hhyhulqngdkwsxhymmcd
+- Migration applied: `amd_initial_schema` (viewable under Database > Migrations in Supabase dashboard)
+
+---
+
 ## Time Summary
 
 | Session | Date | Open | Close | Active | Elapsed |
 |---|---|---|---|---|---|
 | 001 | 2026-06-02 | 10:26 AM EDT | 10:35 AM EDT | ~9 min | ~9 min |
-| **Total** | | | | **~9 min** | **~9 min** |
+| 002 | 2026-06-02 | 11:42 AM EDT | (open) | (in progress) | (in progress) |
+| **Total** | | | | **~9 min+** | **~9 min+** |
 
 ---
 
-*Last updated: 2026-06-02 by agent at session close.*
+*Last updated: 2026-06-02 by agent during Session 002.*
