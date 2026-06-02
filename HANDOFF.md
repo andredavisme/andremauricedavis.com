@@ -91,7 +91,7 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 
 ---
 
-### Session 002 — Initial Database Schema
+### Session 002 — Initial Database Schema + Admin RLS Policies
 
 **Date:** 2026-06-02
 **Session opened:** 11:42 AM EDT
@@ -102,7 +102,8 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 
 - **Schema tables:** 6 core tables created under `amd_` prefix: `amd_content_sources`, `amd_posts`, `amd_users`, `amd_discussion_threads`, `amd_discussion_posts`, `amd_import_log`
 - **RLS:** Enabled on all 6 tables from the start. Initial policies: authenticated users can read published posts, open threads, approved discussion posts; users can insert pending comments; users can read/update their own record
-- **Admin RLS policies:** Deferred to a future migration — will use a helper function checking `amd_users.role = 'admin'` tied to `auth.uid()`
+- **Admin RLS function:** `amd_is_admin()` — STABLE, SECURITY DEFINER function; returns true if `auth.uid()` matches a row in `amd_users` where `role = 'admin'`. Used as the gate for all admin policies.
+- **Admin RLS policy pattern:** One PERMISSIVE `FOR ALL` policy per table named `amd_admin_all_<table>`. Admin policies layer on top of existing platform-user policies — both can coexist because they are both PERMISSIVE.
 - **Duplicate UUID detection:** `amd_users.suspected_duplicate_of` (self-referencing FK) + `duplicate_confidence` (low/medium/high) — admin-managed, no automatic confirmation
 - **updated_at automation:** Shared trigger function `amd_set_updated_at()` applied to all tables with `updated_at` column
 - **Post approval flow:** `amd_posts.is_published` (admin toggles) → `amd_discussion_threads` auto-associated → `amd_discussion_posts.status` (pending → approved/rejected by admin)
@@ -113,6 +114,7 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 
 - [x] Audited existing public schema — confirmed no `amd_` table conflicts
 - [x] Applied migration `amd_initial_schema` — 6 tables, indexes, triggers, RLS policies
+- [x] Applied migration `amd_admin_rls_policies` — `amd_is_admin()` helper function + 6 admin PERMISSIVE FOR ALL policies (one per table)
 
 #### Table Summary
 
@@ -125,9 +127,19 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 | `amd_discussion_posts` | User comments — pending/approved/rejected moderation flow |
 | `amd_import_log` | Append-only audit log for all import events |
 
+#### RLS Policy Summary
+
+| Table | Platform User Policies | Admin Policy |
+|---|---|---|
+| `amd_content_sources` | — (read-only source configs, no user policy needed) | `amd_admin_all_content_sources` |
+| `amd_posts` | Read published posts | `amd_admin_all_posts` |
+| `amd_users` | Read/update own row | `amd_admin_all_users` |
+| `amd_discussion_threads` | Read open threads | `amd_admin_all_discussion_threads` |
+| `amd_discussion_posts` | Read approved; insert pending | `amd_admin_all_discussion_posts` |
+| `amd_import_log` | — (admin-only table) | `amd_admin_all_import_log` |
+
 #### Tasks Left Open
 
-- [ ] Admin RLS policies migration — function checking `amd_users.role = 'admin'` for full CRUD on all tables
 - [ ] Design system proof (`design-test.html`) — establish visual tokens before building
 - [ ] Build full platform frontend (feed, discussion board, admin panel, auth)
 - [ ] Configure GitHub Pages custom domain (CNAME file → Hostinger DNS update)
@@ -136,7 +148,7 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 #### Relevant Links
 
 - Supabase Dashboard: https://supabase.com/dashboard/project/hhyhulqngdkwsxhymmcd
-- Migration applied: `amd_initial_schema` (viewable under Database > Migrations in Supabase dashboard)
+- Migrations applied: `amd_initial_schema`, `amd_admin_rls_policies` (viewable under Database > Migrations)
 
 ---
 
@@ -150,4 +162,4 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 
 ---
 
-*Last updated: 2026-06-02 by agent during Session 002.*
+*Last updated: 2026-06-02 by agent during Session 002 — admin RLS policies applied.*
