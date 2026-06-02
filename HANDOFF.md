@@ -75,7 +75,6 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 
 #### Tasks Left Open
 
-- [ ] Apply initial Supabase migration — `amd_` table schema (posts, users, threads, discussion posts, content sources)
 - [ ] Design system proof (`design-test.html`) — establish visual tokens before building
 - [ ] Build full platform frontend (feed, discussion board, admin panel, auth)
 - [ ] Configure GitHub Pages custom domain (CNAME file → Hostinger DNS update)
@@ -95,8 +94,9 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 
 **Date:** 2026-06-02
 **Session opened:** 11:42 AM EDT
-**Session closed:** (open)
-**Active working time:** (in progress)
+**Session closed:** 12:04 PM EDT
+**Active working time:** ~22 minutes
+**Actual elapsed time:** ~22 minutes
 
 #### Decisions Made
 
@@ -113,8 +113,10 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 #### Tasks Completed
 
 - [x] Audited existing public schema — confirmed no `amd_` table conflicts
-- [x] Applied migration `amd_initial_schema` — 6 tables, indexes, triggers, RLS policies
+- [x] Applied migration `amd_initial_schema` — 6 tables, indexes, triggers, RLS platform-user policies
 - [x] Applied migration `amd_admin_rls_policies` — `amd_is_admin()` helper function + 6 admin PERMISSIVE FOR ALL policies (one per table)
+- [x] Updated `TUTORIAL.md` — added Chapter 2 (Database Schema) and Chapter 3 (RLS & Admin Policies)
+- [x] Updated `HANDOFF.md` — Session 002 fully documented and closed
 
 #### Table Summary
 
@@ -138,7 +140,7 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 | `amd_discussion_posts` | Read approved; insert pending | `amd_admin_all_discussion_posts` |
 | `amd_import_log` | — (admin-only table) | `amd_admin_all_import_log` |
 
-#### Tasks Left Open
+#### Tasks Left Open (carried to Session 003)
 
 - [ ] Design system proof (`design-test.html`) — establish visual tokens before building
 - [ ] Build full platform frontend (feed, discussion board, admin panel, auth)
@@ -148,7 +150,8 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 #### Relevant Links
 
 - Supabase Dashboard: https://supabase.com/dashboard/project/hhyhulqngdkwsxhymmcd
-- Migrations applied: `amd_initial_schema`, `amd_admin_rls_policies` (viewable under Database > Migrations)
+- Migrations: `amd_initial_schema`, `amd_admin_rls_policies` (Database > Migrations in Supabase Dashboard)
+- Tutorial (Chapters 2 & 3 added): https://github.com/andredavisme/andremauricedavis.com/blob/main/TUTORIAL.md
 
 ---
 
@@ -157,9 +160,9 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 | Session | Date | Open | Close | Active | Elapsed |
 |---|---|---|---|---|---|
 | 001 | 2026-06-02 | 10:26 AM EDT | 10:35 AM EDT | ~9 min | ~9 min |
-| 002 | 2026-06-02 | 11:42 AM EDT | (open) | (in progress) | (in progress) |
-| **Total** | | | | **~9 min+** | **~9 min+** |
+| 002 | 2026-06-02 | 11:42 AM EDT | 12:04 PM EDT | ~22 min | ~22 min |
+| **Total** | | | | **~31 min** | **~31 min** |
 
 ---
 
-*Last updated: 2026-06-02 by agent during Session 002 — admin RLS policies applied.*
+*Last updated: 2026-06-02 by agent — Session 002 closed.*
