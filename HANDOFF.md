@@ -37,6 +37,7 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 | Table Prefix | `amd_` |
 | Catalog Doc | `CATALOG.md` in repo root |
 | Tutorial Doc | `TUTORIAL.md` in repo root |
+| Design Proof | `design-test.html` in repo root |
 
 ---
 
@@ -155,14 +156,87 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 
 ---
 
+### Session 003 — Design System Proof + Tutorial Chapter 4
+
+**Date:** 2026-06-02
+**Session opened:** 3:25 PM EDT
+**Session closed:** 3:44 PM EDT
+**Active working time:** ~19 minutes
+**Actual elapsed time:** ~19 minutes
+
+#### Decisions Made
+
+- **Design-first methodology:** Established as the official build philosophy for this project. User experience is designed and proven before any further backend work is done. The frontend is the contract; the backend fulfills it. Documented fully in Tutorial Chapter 4.
+- **Design system name:** AMD Ember
+- **Primary accent:** Amber `#c97b12`
+- **Secondary accent:** Warm orange `#d95e1a`
+- **Display font:** Instrument Serif (editorial headings, feed card titles, chart titles)
+- **Body/UI font:** Work Sans (all body copy, buttons, labels, form inputs)
+- **Type scale:** Fluid using CSS `clamp()` — 8 steps from `--text-xs` to `--text-hero`. No breakpoints needed for typography.
+- **Surface stack:** 6 depth levels (`--color-bg` through `--color-surface-dynamic`) with warm parchment undertones
+- **Logo mark:** "A" letterform with an ember spark dot in warm orange — renders correctly at 24px, 40px, 64px, and as a wordmark
+- **Dark mode:** Full dark palette defined under `[data-theme="dark"]` — all components adapt via CSS custom properties alone, no component-level changes needed
+- **Chart palette (fixed order):** Amber → Orange → Gold → Rust → Brown → Success green → Notification purple → Muted. This order is mandatory for all admin-published visualizations.
+- **Canonical chart types (3 approved):** Trend line (activity over time), Grouped bar (comparisons/cohorts), Donut (composition). Any other type requires explicit justification.
+- **design-test.html:** Lives in repo root. Is the single source of truth for all visual decisions. Must be opened in a browser to review full fidelity including dark mode toggle.
+
+#### Tasks Completed
+
+- [x] Built `design-test.html` — AMD Ember design system proof with 7 sections:
+  - Section 01: Surface layer stack (6 depth levels)
+  - Section 02: Type specimen (display + body zones, all 8 scale steps)
+  - Section 03: Text contrast (primary/muted/faint on all surfaces)
+  - Section 04: Logo mark (all sizes, wordmark, on-dark)
+  - Section 05: Component sampler (buttons ×4, badges ×6, feed card, admin stat cards ×3, form inputs)
+  - Section 06: Accent color swatches (amber + orange ranges)
+  - Section 07: Data visualization examples (trend line, grouped bar, donut — all in Ember palette, embedded as base64 PNGs)
+- [x] Generated 3 canonical chart examples in Python/Plotly using AMD Ember palette
+- [x] Updated `TUTORIAL.md` — added Chapter 4 (Design-First philosophy: the why, the 6-step workflow, CSS custom properties, fluid typography, viz color system)
+- [x] Updated `HANDOFF.md` — Session 003 fully documented and closed
+- [x] Added `design-test.html` reference to Infrastructure Catalog table
+
+#### Design System Quick Reference
+
+| Token | Value |
+|---|---|
+| `--color-primary` | `#c97b12` (amber) |
+| `--color-orange` | `#d95e1a` (warm orange) |
+| `--color-bg` | `#f8f5f0` (warm off-white) |
+| `--color-surface` | `#faf7f3` |
+| `--color-text` | `#1f1a13` (warm charcoal) |
+| `--font-display` | `'Instrument Serif', Georgia, serif` |
+| `--font-body` | `'Work Sans', 'Helvetica Neue', sans-serif` |
+| Dark mode trigger | `[data-theme="dark"]` on `<html>` |
+
+#### Tasks Left Open (carried to Session 004)
+
+- [ ] Push `design-test.html` to the GitHub repo (currently delivered as a local file artifact — needs a `git push` or `create_or_update_file` call at session start)
+- [ ] Schema data inventory — audit `amd_posts` and `amd_content_sources` against design proof requirements (e.g., `image_url`, `color`/`theme_key` for source badge, `reply_count` strategy)
+- [ ] Build the public-facing content feed page (`feed.html` or integrated into `index.html`)
+- [ ] Build the admin panel shell (`admin.html`)
+- [ ] Build the discussion thread view
+- [ ] Configure GitHub Pages custom domain (CNAME file → Hostinger DNS update)
+- [ ] Decide on content source priority order (API vs RSS vs programmatic vs manual) per platform
+- [ ] Google OAuth setup (Supabase Auth provider configuration)
+
+#### Relevant Links
+
+- Design Proof (local artifact this session): `design-test.html` — needs to be pushed to repo
+- Tutorial (Chapter 4 added): https://github.com/andredavisme/andremauricedavis.com/blob/main/TUTORIAL.md
+- Commit (Tutorial Chapter 4): https://github.com/andredavisme/andremauricedavis.com/commit/d3f4eac3d25fc8cb655517572bc65252c59b18a9
+- Supabase Dashboard: https://supabase.com/dashboard/project/hhyhulqngdkwsxhymmcd
+
+---
+
 ## Time Summary
 
 | Session | Date | Open | Close | Active | Elapsed |
 |---|---|---|---|---|---|
 | 001 | 2026-06-02 | 10:26 AM EDT | 10:35 AM EDT | ~9 min | ~9 min |
 | 002 | 2026-06-02 | 11:42 AM EDT | 12:04 PM EDT | ~22 min | ~22 min |
-| **Total** | | | | **~31 min** | **~31 min** |
+| 003 | 2026-06-02 | 3:25 PM EDT | 3:44 PM EDT | ~19 min | ~19 min |
+| **Total** | | | | **~50 min** | **~50 min** |
 
 ---
 
-*Last updated: 2026-06-02 by agent — Session 002 closed.*
+*Last updated: 2026-06-02 by agent — Session 003 closed.*
