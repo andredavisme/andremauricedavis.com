@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discussion — André Maurice Davis</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── AMD Ember Design Tokens ──────────────────────────────── */
+    :root {
+      --color-primary:         #c97b12;
+      --color-primary-hover:   #a8660f;
+      --color-orange:          #d95e1a;
+      --color-bg:              #f8f5f0;
+      --color-surface:         #faf7f3;
+      --color-surface-mid:     #f2ede5;
+      --color-surface-raised:  #ede8df;
+      --color-border:          #d9d0c0;
+      --color-border-light:    #e8e2d8;
+      --color-text:            #1f1a13;
+      --color-text-muted:      #5a5040;
+      --color-text-faint:      #8a7f6e;
+      --color-success:         #2d7a3a;
+      --font-display:          'Instrument Serif', Georgia, serif;
+      --font-body:             'Work Sans', 'Helvetica Neue', sans-serif;
+      --text-xs:   clamp(0.7rem,  0.65rem + 0.2vw, 0.78rem);
+      --text-sm:   clamp(0.82rem, 0.78rem + 0.2vw, 0.9rem);
+      --text-base: clamp(0.95rem, 0.88rem + 0.3vw, 1.05rem);
+      --text-md:   clamp(1.05rem, 0.95rem + 0.4vw, 1.2rem);
+      --text-lg:   clamp(1.2rem,  1.1rem  + 0.5vw, 1.4rem);
+      --text-xl:   clamp(1.4rem,  1.25rem + 0.7vw, 1.75rem);
+      --text-2xl:  clamp(1.7rem,  1.5rem  + 1vw,   2.2rem);
+      --text-hero: clamp(2rem,    1.75rem + 1.5vw,  2.8rem);
+      --radius:    10px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.09);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+    }
+
+    [data-theme="dark"] {
+      --color-bg:             #1a1610;
+      --color-surface:        #211d15;
+      --color-surface-mid:    #2a2419;
+      --color-surface-raised: #332d1f;
+      --color-border:         #3d3525;
+      --color-border-light:   #2e2820;
+      --color-text:           #f0ebe0;
+      --color-text-muted:     #b5a98a;
+      --color-text-faint:     #7a6f58;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      color: var(--color-text);
+      background: var(--color-bg);
+      min-height: 100vh;
+    }
+
+    a { color: var(--color-primary); }
+
+    /* ── Nav ──────────────────────────────────────────────────── */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+      padding: 0 1.5rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      font-family: var(--font-display);
+      font-size: var(--text-lg);
+      color: var(--color-text);
+    }
+
+    .nav-logo {
+      width: 32px;
+      height: 32px;
+      background: var(--color-primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .nav-user {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+    }
+
+    .nav-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--color-surface-raised);
+      object-fit: cover;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.9rem;
+      border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: background 0.15s, opacity 0.15s;
+      text-decoration: none;
+    }
+
+    .btn-primary { background: var(--color-primary); color: #fff; }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--color-text-muted);
+      border: 1px solid var(--color-border);
+    }
+    .btn-ghost:hover { background: var(--color-surface-mid); }
+    .btn-sm { padding: 0.3rem 0.7rem; font-size: var(--text-xs); }
+
+    .theme-toggle {
+      background: none;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      width: 34px;
+      height: 34px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      color: var(--color-text-muted);
+      transition: background 0.15s;
+    }
+    .theme-toggle:hover { background: var(--color-surface-mid); }
+
+    /* ── Page layout ──────────────────────────────────────────── */
+    .page-wrap {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    /* ── Back link ────────────────────────────────────────────── */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      text-decoration: none;
+      margin-bottom: 1.5rem;
+    }
+    .back-link:hover { color: var(--color-primary); }
+
+    /* ── Post card (original content summary) ─────────────────── */
+    .post-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-light);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .post-card-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .post-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--badge-color, var(--color-primary));
+    }
+
+    .post-badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--badge-color, var(--color-primary));
+    }
+
+    .post-card-time {
+      font-size: var(--text-xs);
+      color: var(--color-text-faint);
+    }
+
+    .post-card-title {
+      font-family: var(--font-display);
+      font-size: var(--text-xl);
+      color: var(--color-text);
+      margin-bottom: 0.6rem;
+      line-height: 1.3;
+    }
+
+    .post-card-body {
+      font-size: var(--text-base);
+      color: var(--color-text-muted);
+      line-height: 1.7;
+      margin-bottom: 0.75rem;
+    }
+
+    .post-card-link {
+      font-size: var(--text-sm);
+      color: var(--color-text-faint);
+      text-decoration: none;
+    }
+    .post-card-link:hover { color: var(--color-primary); }
+
+    /* ── Discussion section header ────────────────────────────── */
+    .thread-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      gap: 1rem;
+    }
+
+    .thread-title {
+      font-family: var(--font-display);
+      font-size: var(--text-lg);
+      color: var(--color-text);
+    }
+
+    .thread-count {
+      font-size: var(--text-sm);
+      color: var(--color-text-faint);
+      white-space: nowrap;
+    }
+
+    /* ── Reply composer ───────────────────────────────────────── */
+    .reply-composer {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-light);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.75rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .reply-composer label {
+      display: block;
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--color-text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .reply-composer textarea {
+      width: 100%;
+      min-height: 90px;
+      padding: 0.65rem 0.85rem;
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      color: var(--color-text);
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      resize: vertical;
+      transition: border-color 0.15s;
+      margin-bottom: 0.75rem;
+    }
+
+    .reply-composer textarea:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+
+    .reply-composer-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .reply-composer-note {
+      font-size: var(--text-xs);
+      color: var(--color-text-faint);
+    }
+
+    .reply-success {
+      display: none;
+      font-size: var(--text-sm);
+      color: var(--color-success);
+      margin-top: 0.5rem;
+    }
+
+    /* ── Reply list ───────────────────────────────────────────── */
+    #reply-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .reply-item {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-light);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .reply-item-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin-bottom: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .reply-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--color-surface-raised);
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .reply-avatar-placeholder {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--color-surface-raised);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-xs);
+      color: var(--color-text-faint);
+      flex-shrink: 0;
+    }
+
+    .reply-name {
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--color-text);
+    }
+
+    .reply-time {
+      font-size: var(--text-xs);
+      color: var(--color-text-faint);
+      margin-left: auto;
+    }
+
+    .reply-body {
+      font-size: var(--text-base);
+      color: var(--color-text-muted);
+      line-height: 1.65;
+    }
+
+    .reply-empty {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--color-text-faint);
+      font-size: var(--text-md);
+    }
+
+    /* ── Spinner ──────────────────────────────────────────────── */
+    .spinner-wrap {
+      display: flex;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid var(--color-border);
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Auth gate ────────────────────────────────────────────── */
+    #auth-gate {
+      position: fixed;
+      inset: 0;
+      background: var(--color-bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      z-index: 999;
+    }
+
+    #auth-gate .gate-logo {
+      width: 56px;
+      height: 56px;
+      background: var(--color-primary);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+    }
+
+    #auth-gate p {
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Auth gate -->
+  <div id="auth-gate">
+    <div class="gate-logo">A</div>
+    <p>Checking your session…</p>
+  </div>
+
+  <!-- Nav -->
+  <nav class="nav">
+    <a class="nav-brand" href="./feed.html">
+      <div class="nav-logo">A</div>
+      André Maurice Davis
+    </a>
+    <div class="nav-actions">
+      <div class="nav-user" id="nav-user"></div>
+      <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode">🌙</button>
+      <button class="btn btn-ghost btn-sm" id="sign-out-btn">Sign out</button>
+    </div>
+  </nav>
+
+  <!-- Page content -->
+  <div class="page-wrap">
+    <a class="back-link" id="back-link" href="./feed.html">← Back to feed</a>
+
+    <!-- Original post summary -->
+    <div id="post-card-wrap"></div>
+
+    <!-- Discussion -->
+    <div class="thread-header">
+      <h2 class="thread-title">Discussion</h2>
+      <span class="thread-count" id="reply-count"></span>
+    </div>
+
+    <!-- Reply composer -->
+    <div class="reply-composer">
+      <label for="reply-input">Add to the conversation</label>
+      <textarea id="reply-input" placeholder="Share your thoughts…" maxlength="2000"></textarea>
+      <div class="reply-composer-footer">
+        <span class="reply-composer-note">Replies are reviewed before appearing publicly.</span>
+        <button class="btn btn-primary" id="reply-submit">Submit reply</button>
+      </div>
+      <p class="reply-success" id="reply-success">✓ Reply submitted — it will appear once approved.</p>
+    </div>
+
+    <!-- Approved replies -->
+    <div id="reply-list"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+  </div>
+
+  <script type="module">
+    import { requireAuth, signOut, supabase } from './js/amd-auth.js';
+
+    const BASE_PATH = window.location.hostname === 'andredavisme.github.io'
+      ? '/andremauricedavis.com'
+      : '';
+
+    const PLATFORM_CONFIG = {
+      facebook: { label: 'Facebook', color: '#1877F2', emoji: '📘' },
+      reddit:   { label: 'Reddit',   color: '#FF4500', emoji: '🟠' },
+      linkedin: { label: 'LinkedIn', color: '#0A66C2', emoji: '💼' },
+      youtube:  { label: 'YouTube',  color: '#FF0000', emoji: '▶️' },
+    };
+    const DEFAULT_CONFIG = { label: 'Post', color: '#c97b12', emoji: '📄' };
+
+    function relativeTime(dateStr) {
+      const diff  = Date.now() - new Date(dateStr).getTime();
+      const mins  = Math.floor(diff / 60000);
+      const hours = Math.floor(diff / 3600000);
+      const days  = Math.floor(diff / 86400000);
+      if (mins < 1)   return 'just now';
+      if (mins < 60)  return `${mins}m ago`;
+      if (hours < 24) return `${hours}h ago`;
+      if (days < 30)  return `${days}d ago`;
+      return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    (async () => {
+      // ── Auth ──────────────────────────────────────────────────
+      const user = await requireAuth();
+      if (!user) return;
+      document.getElementById('auth-gate').style.display = 'none';
+
+      // Nav user
+      const meta = window.amdSession?.user?.user_metadata;
+      if (meta) {
+        document.getElementById('nav-user').innerHTML = `
+          ${meta.avatar_url ? `<img class="nav-avatar" src="${meta.avatar_url}" alt="">` : ''}
+          <span>${meta.full_name ?? 'Member'}</span>
+        `;
+      }
+
+      document.getElementById('sign-out-btn').addEventListener('click', signOut);
+
+      // Theme toggle
+      const html   = document.documentElement;
+      const toggle = document.getElementById('theme-toggle');
+      const saved  = localStorage.getItem('amd-theme') ?? 'light';
+      html.setAttribute('data-theme', saved);
+      toggle.textContent = saved === 'dark' ? '☀️' : '🌙';
+      toggle.addEventListener('click', () => {
+        const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('amd-theme', next);
+        toggle.textContent = next === 'dark' ? '☀️' : '🌙';
+      });
+
+      // ── Resolve post ID from URL ───────────────────────────────
+      const params = new URLSearchParams(window.location.search);
+      const postId = params.get('post');
+
+      if (!postId) {
+        document.getElementById('post-card-wrap').innerHTML = '<p style="color:var(--color-text-muted)">No post specified.</p>';
+        document.getElementById('reply-list').innerHTML = '';
+        return;
+      }
+
+      // ── Fetch post ────────────────────────────────────────────
+      const { data: post, error: postErr } = await supabase
+        .from('amd_posts')
+        .select(`
+          id, platform, title, body, url, published_at, imported_at,
+          amd_content_sources!source_id ( label, theme_key )
+        `)
+        .eq('id', postId)
+        .eq('is_published', true)
+        .single();
+
+      if (postErr || !post) {
+        document.getElementById('post-card-wrap').innerHTML = '<p style="color:var(--color-text-muted)">Post not found.</p>';
+        document.getElementById('reply-list').innerHTML = '';
+        return;
+      }
+
+      const source = Array.isArray(post.amd_content_sources)
+        ? post.amd_content_sources[0]
+        : post.amd_content_sources;
+      const cfg = PLATFORM_CONFIG[source?.theme_key?.toLowerCase() ?? post.platform] ?? DEFAULT_CONFIG;
+
+      document.title = (post.title ?? 'Discussion') + ' — André Maurice Davis';
+
+      document.getElementById('post-card-wrap').innerHTML = `
+        <div class="post-card">
+          <div class="post-card-meta">
+            <span class="post-badge" style="--badge-color:${cfg.color}">
+              <span class="post-badge-dot"></span>${cfg.emoji} ${cfg.label}
+            </span>
+            <time class="post-card-time">${relativeTime(post.published_at ?? post.imported_at)}</time>
+          </div>
+          ${post.title ? `<h1 class="post-card-title">${post.title}</h1>` : ''}
+          ${post.body  ? `<p class="post-card-body">${post.body}</p>` : ''}
+          ${post.url   ? `<a class="post-card-link" href="${post.url}" target="_blank" rel="noopener">View original ↗</a>` : ''}
+        </div>
+      `;
+
+      // ── Fetch thread ──────────────────────────────────────────
+      const { data: thread, error: threadErr } = await supabase
+        .from('amd_discussion_threads')
+        .select('id, is_open')
+        .eq('post_id', postId)
+        .single();
+
+      // No thread yet — show empty state, keep composer available
+      const threadId = thread?.id ?? null;
+      const isOpen   = thread?.is_open ?? true;
+
+      // ── Fetch approved replies ─────────────────────────────────
+      async function loadReplies() {
+        if (!threadId) {
+          document.getElementById('reply-list').innerHTML =
+            '<p class="reply-empty">No replies yet. Be the first to start the conversation.</p>';
+          document.getElementById('reply-count').textContent = '0 replies';
+          return;
+        }
+
+        const { data: replies, error: repErr } = await supabase
+          .from('amd_discussion_posts')
+          .select(`
+            id, body, created_at, parent_id,
+            amd_users!user_id ( display_name, avatar_url )
+          `)
+          .eq('thread_id', threadId)
+          .eq('status', 'approved')
+          .order('created_at', { ascending: true });
+
+        if (repErr) {
+          document.getElementById('reply-list').innerHTML =
+            '<p class="reply-empty">Could not load replies.</p>';
+          return;
+        }
+
+        const count = replies?.length ?? 0;
+        document.getElementById('reply-count').textContent =
+          count === 1 ? '1 reply' : `${count} replies`;
+
+        if (count === 0) {
+          document.getElementById('reply-list').innerHTML =
+            '<p class="reply-empty">No replies yet. Be the first to start the conversation.</p>';
+          return;
+        }
+
+        document.getElementById('reply-list').innerHTML = replies.map(r => {
+          const u    = Array.isArray(r.amd_users) ? r.amd_users[0] : r.amd_users;
+          const name = u?.display_name ?? 'Community member';
+          const av   = u?.avatar_url;
+          return `
+            <div class="reply-item">
+              <div class="reply-item-meta">
+                ${av
+                  ? `<img class="reply-avatar" src="${av}" alt="">`
+                  : `<div class="reply-avatar-placeholder">👤</div>`}
+                <span class="reply-name">${name}</span>
+                <time class="reply-time">${relativeTime(r.created_at)}</time>
+              </div>
+              <p class="reply-body">${r.body}</p>
+            </div>
+          `;
+        }).join('');
+      }
+
+      await loadReplies();
+
+      // ── Composer: disable if thread is closed ──────────────────
+      const textarea = document.getElementById('reply-input');
+      const submitBtn = document.getElementById('reply-submit');
+
+      if (!isOpen) {
+        textarea.disabled = true;
+        textarea.placeholder = 'This discussion is closed.';
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Closed';
+      }
+
+      // ── Submit reply ───────────────────────────────────────────
+      submitBtn.addEventListener('click', async () => {
+        const body = textarea.value.trim();
+        if (!body) return;
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting…';
+
+        // Resolve or lazily create thread
+        let resolvedThreadId = threadId;
+
+        if (!resolvedThreadId) {
+          // Thread doesn't exist yet — insert it (will succeed if RLS allows user insert;
+          // admin creates threads on publish, so this is a safety fallback only)
+          const { data: newThread, error: newThreadErr } = await supabase
+            .from('amd_discussion_threads')
+            .insert({ post_id: postId, is_open: true })
+            .select('id')
+            .single();
+
+          if (newThreadErr || !newThread) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit reply';
+            alert('Could not start thread. Please try again.');
+            return;
+          }
+          resolvedThreadId = newThread.id;
+        }
+
+        const { error: insertErr } = await supabase
+          .from('amd_discussion_posts')
+          .insert({
+            thread_id: resolvedThreadId,
+            user_id:   window.amdUser.id,
+            body,
+            status:    'pending',
+          });
+
+        if (insertErr) {
+          console.error('Reply insert error:', insertErr);
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit reply';
+          alert('Something went wrong. Please try again.');
+          return;
+        }
+
+        textarea.value = '';
+        submitBtn.textContent = 'Submit reply';
+        submitBtn.disabled = false;
+        const successEl = document.getElementById('reply-success');
+        successEl.style.display = 'block';
+        setTimeout(() => { successEl.style.display = 'none'; }, 5000);
+      });
+
+    })();
+  </script>
+
+</body>
+</html>
