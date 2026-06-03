@@ -17,14 +17,14 @@ const BASE_PATH = window.location.hostname === 'andredavisme.github.io'
   ? '/andremauricedavis.com'
   : '';
 
-// Explicit redirect URLs — hardcoded to prevent fallback to other project's Site URL.
-// Dynamic construction (window.location.origin + BASE_PATH) was ambiguous to Supabase
-// and caused it to fall back to the shared project's Site URL on auth callback.
+// REDIRECT_URL points to site root so index.html catches the OAuth callback hash
+// and forwards to feed.html. This avoids Supabase allowlist exact-match issues
+// with deep paths like /feed.html.
 const REDIRECT_URL = window.location.hostname === 'andredavisme.github.io'
-  ? 'https://andredavisme.github.io/andremauricedavis.com/feed.html'
+  ? 'https://andredavisme.github.io/andremauricedavis.com/'
   : window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? window.location.origin + '/feed.html'
-  : 'https://andremauricedavis.com/feed.html';
+  ? window.location.origin + '/'
+  : 'https://andremauricedavis.com/';
 
 // storageKey namespaces auth tokens away from other projects on the same Supabase instance.
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {

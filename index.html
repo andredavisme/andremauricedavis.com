@@ -8,12 +8,21 @@
     body { margin: 0; font-family: sans-serif; background: #f7f6f2; color: #28251d; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 2rem; }
     h1 { font-size: clamp(2rem, 5vw, 4rem); margin-bottom: 0.5rem; }
     p { color: #7a7974; font-size: 1.125rem; max-width: 480px; }
-    .badge { display: inline-block; margin-top: 2rem; padding: 0.5rem 1.25rem; background: #01696f; color: #fff; border-radius: 9999px; font-size: 0.875rem; text-decoration: none; }
+    .badge { display: inline-block; margin-top: 2rem; padding: 0.5rem 1.25rem; background: #c97b12; color: #fff; border-radius: 9999px; font-size: 0.875rem; text-decoration: none; }
   </style>
 </head>
 <body>
   <h1>André Maurice Davis</h1>
   <p>Platform coming soon — consolidating community, content, and conversation in one place.</p>
   <a class="badge" href="https://github.com/andredavisme/andremauricedavis.com" target="_blank" rel="noopener noreferrer">Follow the build →</a>
+
+  <script>
+    // OAuth callback handler: Supabase appends #access_token=... after redirect.
+    // If detected here on the root, forward to feed.html preserving the hash.
+    if (window.location.hash && window.location.hash.includes('access_token')) {
+      const base = window.location.pathname.replace(/\/$/, '');
+      window.location.replace(base + '/feed.html' + window.location.hash);
+    }
+  </script>
 </body>
 </html>
