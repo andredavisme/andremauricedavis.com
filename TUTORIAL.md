@@ -123,7 +123,7 @@ A **UUID** (Universally Unique Identifier) is a randomly generated 128-bit numbe
 
 Example: `550e8400-e29b-41d4-a716-446655440000`
 
-We use UUIDs as the primary key (the unique identifier) for every row in every table. We also use UUIDs for users instead of their email address — more on that in Chapter 6.
+We use UUIDs as the primary key (the unique identifier) for every row in every table. We also use UUIDs for users instead of their email address — more on that in Chapter 7.
 
 ### What Is a Primary Key?
 
@@ -228,7 +228,7 @@ All of our policies are PERMISSIVE. This is important because it means our **pla
 
 `auth.uid()` is a built-in Supabase function that returns the UUID of the currently authenticated user — the person who made the API request. It's the bridge between your application's login system and your database's security rules.
 
-When a user logs in through Google OAuth (more on this in Chapter 6), Supabase issues them a session token. Every subsequent database request includes that token, and `auth.uid()` extracts the user's identity from it.
+When a user logs in through Google OAuth (more on this in Chapter 7), Supabase issues them a session token. Every subsequent database request includes that token, and `auth.uid()` extracts the user's identity from it.
 
 This is why we use UUIDs for user identity — the same UUID that the auth system assigns is what we store in `amd_users.id`, allowing us to join authentication data with application data without ever storing an email address.
 
@@ -449,10 +449,276 @@ Any other chart type requires explicit justification before being introduced, to
 
 ---
 
+## Chapter 5 — Schema Inventory: Bridging Design and Data (Session 005)
+
+### What Is a Schema Inventory?
+
+A **schema inventory** is a structured comparison between two things: what your frontend needs to render a page correctly, and what your database currently provides. It is not a one-time task — it should be performed at the start of every significant frontend build.
+
+The process is simple:
+1. Open the design proof (or the existing HTML shell) and identify every dynamic element — every piece of content that will come from the database rather than being hardcoded
+2. For each element, write down the exact database field it needs
+3. Query the database schema to see which of those fields already exist
+4. Note any gaps — fields the design requires that the schema does not yet provide
+5. Decide how to close each gap: add a column, use a JOIN, or compute the value in the frontend
+
+This step cannot be skipped. Discovering a missing column after you've already written the frontend query means rewriting both the query and potentially the HTML. Discovering it before you write anything costs almost nothing.
+
+### What We Found for `amd_content_sources`
+
+The feed card badge requires: a platform label, a color, and an indicator of whether the source is active. Here is what the inventory showed:
+
+| Design Requirement | Column | Status |
+|---|---|---|
+| Platform name | `platform` | ✅ Exists |
+| Human-readable label | `label` | ✅ Exists |
+| Badge/dot color key | `theme_key` | ✅ Exists (nullable) |
+| Is this source active? | `is_active` | ✅ Exists |
+
+One nuance: `theme_key` is a free-text column — the database doesn't enforce what values it can hold. The color mapping (e.g., `facebook → #1877F2`) lives in the frontend as a JavaScript lookup table called `PLATFORM_CONFIG`. This is intentional: color is a presentation concern, not a data concern. The database stores which platform something came from; the frontend decides how to display it.
+
+### What We Found for `amd_posts`
+
+The feed card requires: title, body excerpt, thumbnail, media, platform badge, timestamps, engagement counts, and a link to the original post. All of these existed already in the schema.
+
+One field was missing: **the AMD platform reply count** — how many approved community replies the post's discussion thread has received. The feed card footer was designed to show this.
+
+This led to a design decision that is worth understanding in depth.
+
+### The Derived Count Problem: Two Approaches
+
+When a frontend component needs to display a count of related records ("5 replies"), there are two fundamental strategies:
+
+**Option A — Compute it at query time (JOIN)**
+Every time you fetch a list of posts, you also JOIN to the discussion tables and count the approved replies on the fly. The count is always perfectly accurate. No extra storage. No synchronization needed. The tradeoff: slightly more work per query.
+
+**Option B — Store a cached count (denormalization)**
+Add a `reply_count` integer column to `amd_posts`. Every time a reply is approved, increment it. Every time a reply is deleted, decrement it — typically via a database trigger. The count is always pre-computed, so reads are very fast. The tradeoff: if the trigger ever fails, the count becomes stale and wrong.
+
+We chose **Option A** for this project. Here is the reasoning:
+
+- **Scale:** At the current scale of this platform (hundreds to low thousands of posts), the JOIN overhead is negligible. Option B's performance advantage only matters at millions of rows.
+- **Correctness:** Option A is always accurate. Option B can drift if a trigger fails, a bulk operation bypasses triggers, or data is edited directly in the database.
+- **Simplicity:** Option A requires no additional migration, no trigger, and no column to maintain. The entire logic lives in a single query line.
+- **Rule of thumb:** Do not denormalize until you have measured a real performance problem. Premature optimization is the source of many subtle data bugs.
+
+### How the Reply Count JOIN Works
+
+In Supabase's JavaScript client, you can request data from related tables using embedded resource syntax. The key is the `!foreign_key` notation, which tells Supabase which relationship to use when two tables are connected by multiple foreign keys.
+
+Here is the query structure:
+
+```javascript
+supabase
+  .from('amd_posts')
+  .select(`
+    id, title, body, ...,
+    amd_content_sources!source_id ( label, theme_key ),
+    amd_discussion_threads!post_id (
+      id,
+      amd_discussion_posts!thread_id ( id )
+    )
+  `)
+  .eq('is_published', true)
+  .eq('amd_discussion_threads.amd_discussion_posts.status', 'approved')
+```
+
+This single query returns each post with:
+- Its source label and theme key (for the platform badge)
+- Its discussion thread, if one exists
+- Only the approved discussion posts within that thread
+
+The reply count is then derived in JavaScript:
+```javascript
+function getReplyCount(post) {
+  const threads = post.amd_discussion_threads;
+  if (!threads || threads.length === 0) return 0;
+  return threads[0].amd_discussion_posts?.length ?? 0;
+}
+```
+
+No extra query. No extra column. The count is accurate because the filter (`status = 'approved'`) is applied at the database level before the data is even sent to the browser.
+
+### What Is a JOIN?
+
+A **JOIN** is a database operation that combines rows from two or more tables based on a related column — the foreign key.
+
+Think of it like a pivot table in a spreadsheet. You have a sheet of posts and a sheet of replies. A JOIN says: "For each post row, find all reply rows where the reply's `post_id` matches the post's `id`, and attach them."
+
+JOINs are fundamental to relational databases. They are how you avoid duplicating data across tables. Instead of copying the post title into every reply row, you store the `post_id` and JOIN to get the title when you need it.
+
+In our case, the JOIN chain is three levels deep:
+- `amd_posts` → `amd_discussion_threads` (connected by `post_id`)
+- `amd_discussion_threads` → `amd_discussion_posts` (connected by `thread_id`, filtered to `status = 'approved'`)
+
+Supabase handles this chain automatically when you use the embedded resource syntax shown above.
+
+### The `theme_key` Canonical Values
+
+As a result of the schema inventory, we formally documented the canonical `theme_key` values for each platform. These live in `js/amd-feed.js` as the `PLATFORM_CONFIG` object:
+
+| `theme_key` value | Display Label | Badge Color | Emoji |
+|---|---|---|---|
+| `facebook` | Facebook | `#1877F2` | 📘 |
+| `reddit` | Reddit | `#FF4500` | 🟠 |
+| `linkedin` | LinkedIn | `#0A66C2` | 💼 |
+| `youtube` | YouTube | `#FF0000` | ▶️ |
+
+Any `amd_content_sources` row whose `theme_key` doesn't match one of these values falls back to the amber primary color and a generic label. This fallback makes the system resilient to new or unrecognized sources without breaking the UI.
+
+---
+
+## Chapter 6 — Discussion Threads: Tying Conversations to Content (Session 005)
+
+### The Purpose of a Discussion Thread
+
+Every piece of content on the feed has exactly one discussion thread. This is a deliberate architectural choice — not one thread per comment, not a global discussion board, but **one focused conversation space per post**.
+
+This mirrors how the best online communities work: the context of the conversation is the content itself. You're not just talking into a void; you're responding to something specific. That specificity raises the quality of discussion.
+
+The relationship is enforced at the database level:
+- `amd_discussion_threads.post_id` is a foreign key to `amd_posts.id`
+- A thread cannot exist without a post
+- The `is_open` boolean lets an admin close a thread without deleting it
+
+### The Content → Thread → Reply Data Flow
+
+Understanding how data flows through these three tables is essential to understanding everything that happens on `thread.html`:
+
+```
+amd_posts (is_published = true)
+    ↓  post_id
+amd_discussion_threads (is_open = true/false)
+    ↓  thread_id
+amd_discussion_posts (status: pending → approved/rejected)
+```
+
+1. A post is imported and an admin sets `is_published = true`
+2. A `amd_discussion_threads` row is created with `post_id` pointing to that post (admin does this when publishing, or it is created lazily when the first reply is submitted)
+3. A user submits a reply — a row is inserted into `amd_discussion_posts` with `status = 'pending'`
+4. An admin reviews the reply and sets `status = 'approved'` or `'rejected'`
+5. Only approved replies are returned to platform users by the RLS policy
+
+This flow means users can always *submit* a reply, but they will only *see* replies that have passed moderation. The pending state is invisible to platform users — it exists only in the admin view.
+
+### What Is a URL Parameter?
+
+The thread page (`thread.html`) needs to know which post to display. Rather than creating a separate HTML file for every post (impossible, since posts are dynamic), we use a **URL parameter** — a piece of data embedded in the URL after a `?` character.
+
+Example:
+```
+https://andremauricedavis.com/thread.html?post=550e8400-e29b-41d4-a716-446655440000
+```
+
+The `?post=550e8400...` part is the URL parameter. JavaScript reads it like this:
+
+```javascript
+const params = new URLSearchParams(window.location.search);
+const postId = params.get('post'); // returns the UUID string
+```
+
+This is how a single `thread.html` file can serve a unique discussion for every post in the database. The file is a template; the URL parameter is the instruction for which content to fill it with.
+
+This pattern is fundamental to dynamic web applications. Instead of building a unique page for each piece of content, you build one smart page that reads its instructions from the URL.
+
+### Lazy Thread Creation
+
+In an ideal workflow, an admin creates the `amd_discussion_threads` row at the same time they publish a post. But what if they forget? Or what if a post was published before the thread system was built?
+
+To handle this gracefully, `thread.html` includes a **lazy thread creation** fallback: if the page loads and no thread exists for the post, the first user to submit a reply triggers the creation of the thread automatically.
+
+```javascript
+if (!resolvedThreadId) {
+  const { data: newThread } = await supabase
+    .from('amd_discussion_threads')
+    .insert({ post_id: postId, is_open: true })
+    .select('id')
+    .single();
+  resolvedThreadId = newThread.id;
+}
+```
+
+This is called **lazy initialization** — you don't create the resource until it's actually needed. The advantages:
+- The system never breaks due to a missing thread
+- No batch migration is needed when publishing historical content
+- The admin workflow is forgiving of imperfect sequencing
+
+The risk: two users might simultaneously trigger thread creation for the same post, creating duplicate threads. This is a known edge case that can be addressed with a database unique constraint on `(post_id)` in `amd_discussion_threads` — a worthwhile future migration.
+
+### The Moderation Gate on the Frontend
+
+Platform users submit replies with `status = 'pending'`. The query that loads approved replies filters to `status = 'approved'`. This means a user who just submitted a reply will not immediately see it appear — and that is intentional.
+
+`thread.html` communicates this expectation clearly with a confirmation message:
+> *"Reply submitted — it will appear once approved."
+
+This is an important UX principle: **never leave a user uncertain about whether their action succeeded**. The reply did succeed — it was inserted into the database. The user needs to know that. What they also need to know is that the process isn't instantaneous, and why. The note below the composer — "Replies are reviewed before appearing publicly" — sets that expectation before they even hit submit.
+
+Transparency about moderation builds trust. Users who understand the system are less likely to resubmit the same reply three times wondering why it didn't appear.
+
+### Handling the Closed Thread State
+
+Threads have an `is_open` boolean. When `is_open = false`, the discussion is archived — the history is visible, but no new replies can be submitted.
+
+`thread.html` handles this state by disabling the composer:
+```javascript
+if (!isOpen) {
+  textarea.disabled = true;
+  textarea.placeholder = 'This discussion is closed.';
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Closed';
+}
+```
+
+This is another example of a state the database controls and the frontend reflects. The admin flips one boolean in one row; every user who visits the thread sees the correct experience automatically, with no code deployment required.
+
+### What Is `?.` (Optional Chaining) in JavaScript?
+
+Throughout the thread and feed JavaScript, you'll see expressions like:
+```javascript
+threads[0].amd_discussion_posts?.length ?? 0
+```
+
+The `?.` is called the **optional chaining operator**. It means: "try to access this property, but if the thing to the left is `null` or `undefined`, return `undefined` instead of throwing an error."
+
+Without it:
+```javascript
+threads[0].amd_discussion_posts.length  // throws if amd_discussion_posts is null
+```
+
+With it:
+```javascript
+threads[0].amd_discussion_posts?.length  // returns undefined if null — safe
+```
+
+The `?? 0` at the end is the **nullish coalescing operator** — it says "if the result is `null` or `undefined`, use `0` instead."
+
+Together, `?.length ?? 0` means: "give me the length of this array if it exists; otherwise give me zero." This pattern appears constantly when working with data from an API where any field could theoretically be missing.
+
+### What Is `async/await`?
+
+Fetching data from a database takes time — the request travels over the internet, the database processes it, the response travels back. This is called an **asynchronous operation**: the JavaScript engine doesn't stop and wait; it continues doing other things until the response arrives.
+
+`async/await` is the modern JavaScript syntax for managing this:
+
+```javascript
+async function loadReplies() {
+  const { data: replies } = await supabase
+    .from('amd_discussion_posts')
+    .select('...')
+    .eq('status', 'approved');
+  // replies is available here, after the await resolves
+}
+```
+
+`async` marks the function as one that contains asynchronous operations. `await` tells JavaScript: "pause execution of this function here until the promise resolves, then continue with the result."
+
+Without `await`, you'd have to use callback functions or `.then()` chains — older patterns that are harder to read and reason about. `async/await` makes asynchronous code look and behave like the synchronous code you're used to reading line by line.
+
+---
+
 ## Upcoming Chapters (To Be Written)
 
-- **Chapter 5 — The Content Feed** — building the public-facing feed from design proof to working HTML
-- **Chapter 6 — Discussion Threads** — tying conversations to content, moderation flow
 - **Chapter 7 — User Authentication** — Google OAuth + UUID tracking, no email storage
 - **Chapter 8 — The Admin Panel** — importing, moderating, analyzing
 - **Chapter 9 — Community Analytics** — cohorts, visualizations, critical thinking tools
@@ -460,4 +726,4 @@ Any other chart type requires explicit justification before being introduced, to
 
 ---
 
-*Last updated: 2026-06-02 — Session 003 (Chapter 4 added — Design First philosophy and design system proof)*
+*Last updated: 2026-06-03 — Session 005 (Chapters 5 and 6 added — schema inventory, derived counts, JOIN strategy, discussion thread architecture)*
