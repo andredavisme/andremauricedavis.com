@@ -200,16 +200,9 @@ Rules every agent must follow throughout a session, in addition to reading this 
 
 #### Tasks Completed
 
-- [x] Built `design-test.html` — AMD Ember design system proof with 7 sections:
-  - Section 01: Surface layer stack (6 depth levels)
-  - Section 02: Type specimen (display + body zones, all 8 scale steps)
-  - Section 03: Text contrast (primary/muted/faint on all surfaces)
-  - Section 04: Logo mark (all sizes, wordmark, on-dark)
-  - Section 05: Component sampler (buttons ×4, badges ×6, feed card, admin stat cards ×3, form inputs)
-  - Section 06: Accent color swatches (amber + orange ranges)
-  - Section 07: Data visualization examples (trend line, grouped bar, donut — all in Ember palette, embedded as base64 JPEGs)
+- [x] Built `design-test.html` — AMD Ember design system proof with 7 sections
 - [x] Generated 3 canonical chart examples in Python/Plotly using AMD Ember palette
-- [x] Updated `TUTORIAL.md` — added Chapter 4 (Design-First philosophy: the why, the 6-step workflow, CSS custom properties, fluid typography, viz color system)
+- [x] Updated `TUTORIAL.md` — added Chapter 4 (Design-First philosophy)
 - [x] Updated `HANDOFF.md` — Session 003 fully documented and closed
 - [x] Added `design-test.html` reference to Infrastructure Catalog table
 
@@ -226,21 +219,9 @@ Rules every agent must follow throughout a session, in addition to reading this 
 | `--font-body` | `'Work Sans', 'Helvetica Neue', sans-serif` |
 | Dark mode trigger | `[data-theme="dark"]` on `<html>` |
 
-#### Tasks Left Open (carried to Session 004)
-
-- [ ] Push `design-test.html` to the GitHub repo
-- [ ] Schema data inventory — audit `amd_posts` and `amd_content_sources` against design proof requirements
-- [ ] Build the public-facing content feed page (`feed.html` or integrated into `index.html`)
-- [ ] Build the admin panel shell (`admin.html`)
-- [ ] Build the discussion thread view
-- [ ] Configure GitHub Pages custom domain (CNAME file → Hostinger DNS update)
-- [ ] Decide on content source priority order (API vs RSS vs programmatic vs manual) per platform
-- [ ] Google OAuth setup (Supabase Auth provider configuration)
-
 #### Relevant Links
 
 - Tutorial (Chapter 4 added): https://github.com/andredavisme/andremauricedavis.com/blob/main/TUTORIAL.md
-- Commit (Tutorial Chapter 4): https://github.com/andredavisme/andremauricedavis.com/commit/d3f4eac3d25fc8cb655517572bc65252c59b18a9
 - Supabase Dashboard: https://supabase.com/dashboard/project/hhyhulqngdkwsxhymmcd
 
 ---
@@ -249,7 +230,9 @@ Rules every agent must follow throughout a session, in addition to reading this 
 
 **Date:** 2026-06-02
 **Session opened:** 4:03 PM EDT
-**Session closed:** ongoing
+**Session closed:** 4:15 PM EDT (estimated)
+**Active working time:** ~12 minutes
+**Actual elapsed time:** ~12 minutes
 
 #### Decisions Made
 
@@ -260,20 +243,71 @@ Rules every agent must follow throughout a session, in addition to reading this 
 - [x] Pushed `design-test.html` to repo root — all 7 sections including Section 07 canonical charts (base64 JPEG embedded). Confirmed via commit [`4062d4b`](https://github.com/andredavisme/andremauricedavis.com/commit/4062d4b47de15cf8d1ac45247c60fc1994f159ca)
 - [x] Added **Agent Protocol** section to `HANDOFF.md` — file push verification rule with context note
 
-#### Tasks Left Open (carried to Session 005)
-
-- [ ] Schema data inventory — audit `amd_posts` and `amd_content_sources` against design proof requirements (e.g., `image_url`, `color`/`theme_key` for source badge, `reply_count` strategy)
-- [ ] Build the public-facing content feed page (`feed.html` or integrated into `index.html`)
-- [ ] Build the admin panel shell (`admin.html`)
-- [ ] Build the discussion thread view
-- [ ] Configure GitHub Pages custom domain (CNAME file → Hostinger DNS update)
-- [ ] Decide on content source priority order (API vs RSS vs programmatic vs manual) per platform
-- [ ] Google OAuth setup (Supabase Auth provider configuration)
-
 #### Relevant Links
 
 - design-test.html: https://github.com/andredavisme/andremauricedavis.com/blob/main/design-test.html
 - Confirming commit: https://github.com/andredavisme/andremauricedavis.com/commit/4062d4b47de15cf8d1ac45247c60fc1994f159ca
+
+---
+
+### Session 005 — Gap 2: Cascading Source Picker in Import Tab
+
+**Date:** 2026-06-03
+**Session opened:** 2:09 PM EDT
+**Session closed:** ongoing
+**Active working time:** ~ongoing
+**Actual elapsed time:** ~ongoing
+
+#### Problem Statement (Gap 2)
+
+The Import tab had a hardcoded Platform dropdown but no way to tie an imported post to a specific *source account* within that platform (e.g., "Andre Davis — Facebook Profile" vs. a group page). The `amd_posts` table has a `source_id` FK to `amd_content_sources` but the form was not populating it.
+
+#### Decisions Made
+
+- **Source picker is optional:** A post can be saved without a source FK. The blank "No specific source…" option is always present after a platform is selected.
+- **Cascading behavior:** Source picker is disabled until a platform is selected, then filters `amd_content_sources` by `platform` and `is_active = true`. Sources are fetched once on page load and cached in `allSources[]` to avoid repeated DB calls.
+- **Auto-select:** If only one source exists for the chosen platform, it is auto-selected and its `import_method` is mirrored to the Import Method dropdown.
+- **Sync on source change:** Changing the source also updates the Import Method dropdown to match `amd_content_sources.import_method` — prevents method/source mismatch.
+- **Seed data:** 4 starter rows inserted into `amd_content_sources` — one per platform — so the picker is functional from day one.
+- **Clear behavior:** Clicking "Clear" resets the source picker to its disabled placeholder state.
+
+#### Tasks Completed
+
+- [x] Seeded `amd_content_sources` with 4 rows (one per platform: Facebook, Reddit, LinkedIn, YouTube)
+- [x] Updated `admin.html` — gap 2 cascading source picker implemented:
+  - `loadSources()` — fetches all active sources once at page load, caches in `allSources[]`
+  - `populateSourcePicker(platform)` — filters cache, builds options, handles empty state
+  - Platform change listener — calls `populateSourcePicker` or resets picker
+  - Source change listener — syncs `import_method` dropdown
+  - `submit-import` updated to read `field-source-id` and write `source_id` to `amd_posts`
+  - `clear-import` updated to reset source picker
+- [x] Confirmed push via commit [`16d7efca`](https://github.com/andredavisme/andremauricedavis.com/commit/16d7efcae28a033cf1d03fd8af1cc798c860b38c)
+- [x] Updated `HANDOFF.md` — Session 005 documented
+
+#### Seeded Sources
+
+| Platform | Label | Import Method |
+|---|---|---|
+| facebook | Andre Davis — Facebook Profile | manual |
+| reddit | u/andremauricedavis — Reddit | manual |
+| linkedin | Andre Davis — LinkedIn | manual |
+| youtube | Andre Davis — YouTube Channel | manual |
+
+#### Tasks Left Open (carried to Session 006)
+
+- [ ] Schema data inventory — audit `amd_posts` and `amd_content_sources` against design proof requirements
+- [ ] Build the public-facing content feed page (`feed.html` or integrated into `index.html`)
+- [ ] Build the discussion thread view
+- [ ] Configure GitHub Pages custom domain (CNAME file → Hostinger DNS update)
+- [ ] Decide on content source priority order (API vs RSS vs programmatic vs manual) per platform
+- [ ] Google OAuth setup (Supabase Auth provider configuration)
+- [ ] Gap 3+ audit — identify next admin.html or frontend gaps to close
+
+#### Relevant Links
+
+- admin.html (updated): https://github.com/andredavisme/andremauricedavis.com/blob/main/admin.html
+- Confirming commit: https://github.com/andredavisme/andremauricedavis.com/commit/16d7efcae28a033cf1d03fd8af1cc798c860b38c
+- Supabase amd_content_sources: https://supabase.com/dashboard/project/hhyhulqngdkwsxhymmcd/editor (query: `SELECT * FROM amd_content_sources`)
 
 ---
 
@@ -284,9 +318,10 @@ Rules every agent must follow throughout a session, in addition to reading this 
 | 001 | 2026-06-02 | 10:26 AM EDT | 10:35 AM EDT | ~9 min | ~9 min |
 | 002 | 2026-06-02 | 11:42 AM EDT | 12:04 PM EDT | ~22 min | ~22 min |
 | 003 | 2026-06-02 | 3:25 PM EDT | 3:44 PM EDT | ~19 min | ~19 min |
-| 004 | 2026-06-02 | 4:03 PM EDT | ongoing | ~ongoing | ~ongoing |
-| **Total** | | | | **~50 min + Session 004** | |
+| 004 | 2026-06-02 | 4:03 PM EDT | ~4:15 PM EDT | ~12 min | ~12 min |
+| 005 | 2026-06-03 | 2:09 PM EDT | ongoing | ~ongoing | ~ongoing |
+| **Total** | | | | **~62 min + Session 005** | |
 
 ---
 
-*Last updated: 2026-06-02 by agent — Session 004 in progress.*
+*Last updated: 2026-06-03 by agent — Session 005 in progress.*
