@@ -140,14 +140,14 @@
 
 <!-- ACCESS DENIED -->
 <div id="access-denied">
-  <h2>⛔ Access Denied</h2>
+  <h2>&#9940; Access Denied</h2>
   <p>This account does not have admin privileges.</p>
   <button class="btn-secondary" id="signout-denied">Sign out</button>
 </div>
 
 <!-- ADMIN HEADER -->
 <header id="admin-header" style="display:none">
-  <span class="brand">🔶 AMD Admin</span>
+  <span class="brand">&#128310; AMD Admin</span>
   <div class="user-info">
     <span id="header-email"></span>
     <span class="badge">Admin</span>
@@ -158,9 +158,9 @@
 <!-- ADMIN UI -->
 <div id="admin-ui">
   <div class="tab-bar">
-    <button class="tab-btn active" data-tab="import">📥 Import</button>
-    <button class="tab-btn" data-tab="steward" id="steward-tab-btn">📋 Steward</button>
-    <button class="tab-btn" data-tab="analysis">📊 Analysis</button>
+    <button class="tab-btn active" data-tab="import">&#128229; Import</button>
+    <button class="tab-btn" data-tab="steward" id="steward-tab-btn">&#128203; Steward</button>
+    <button class="tab-btn" data-tab="analysis">&#128202; Analysis</button>
   </div>
 
   <!-- IMPORT TAB -->
@@ -178,9 +178,6 @@
         </select>
       </div>
       <div>
-        <!-- GAP 2: Source picker — cascades off Platform selection.
-             Loads active rows from amd_content_sources filtered by chosen platform.
-             Disabled until a platform is chosen. Stores source_id on the post row. -->
         <label>Source</label>
         <select id="field-source-id" disabled>
           <option value="">Select platform first…</option>
@@ -270,7 +267,7 @@
   <!-- ANALYSIS TAB -->
   <div id="tab-analysis" class="tab-content">
     <div class="placeholder-panel">
-      <h3>📊 Analysis</h3>
+      <h3>&#128202; Analysis</h3>
       <p>Define cohorts, generate visualizations, and publish analysis to discussion threads.</p>
       <p style="margin-top:8px;font-size:12px">Coming next session.</p>
     </div>
@@ -279,7 +276,7 @@
 
 <script>
   const SUPABASE_URL = 'https://hhyhulqngdkwsxhymmcd.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_Lc7rXKQ-1TJaQFu7a-nOVQ_5Sf3x__M';
+  const SUPABASE_KEY = 'sb_publishable_haKvwV0M7KMj4Qz69M6WGg_KmIfU-aI';
   const { createClient } = supabase;
   const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
   const SUPER_ADMIN_EMAIL = 'andre.davis.me@gmail.com';
@@ -290,7 +287,7 @@
   const adminUi      = document.getElementById('admin-ui');
   const headerEmail  = document.getElementById('header-email');
 
-  // ── Auth ──────────────────────────────────────────────────────
+  // ── Auth ────────────────────────────────────────────
   async function checkSession() {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) return showAuth();
@@ -316,7 +313,7 @@
   });
   sb.auth.onAuthStateChange(async (_e, session) => { if (session) await resolveUser(session.user); else showAuth(); });
 
-  // ── Tabs ─────────────────────────────────────────────────────
+  // ── Tabs ───────────────────────────────────────────
   let stewardLoaded = false;
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -331,13 +328,12 @@
     });
   });
 
-  // ── Enrichment collapsible ────────────────────────────────────
+  // ── Enrichment collapsible ────────────────────────────
   const enrichToggle = document.getElementById('enrichment-toggle');
   const enrichBody   = document.getElementById('enrichment-body');
   enrichToggle.addEventListener('click', () => { enrichToggle.classList.toggle('open'); enrichBody.classList.toggle('open'); });
 
-  // ── GAP 2: Source picker ─────────────────────────────────────
-  // Cache all active sources so we only fetch once per page load.
+  // ── Source picker ───────────────────────────────────
   let allSources = [];
 
   async function loadSources() {
@@ -363,7 +359,6 @@
       return;
     }
 
-    // First option: blank (optional — post can exist without a source FK)
     const blank = document.createElement('option');
     blank.value = '';
     blank.textContent = 'No specific source…';
@@ -380,10 +375,8 @@
     sel.disabled = false;
     hint.textContent = '';
 
-    // Auto-select if only one option
     if (filtered.length === 1) {
       sel.value = filtered[0].id;
-      // Carry the source's import_method into the method field as a helpful default
       document.getElementById('field-method').value = filtered[0].import_method || 'manual';
     }
   }
@@ -401,7 +394,6 @@
     populateSourcePicker(platform);
   });
 
-  // When a source is picked, sync its import_method to the method dropdown
   document.getElementById('field-source-id').addEventListener('change', function () {
     const selected = this.options[this.selectedIndex];
     if (selected && selected.dataset.method) {
@@ -409,11 +401,11 @@
     }
   });
 
-  // ── Import submit ────────────────────────────────────────────
+  // ── Import submit ──────────────────────────────────
   document.getElementById('submit-import').addEventListener('click', async () => {
     const status = document.getElementById('import-status');
     const platform     = document.getElementById('field-platform').value;
-    const sourceId     = document.getElementById('field-source-id').value || null; // GAP 2: include source FK
+    const sourceId     = document.getElementById('field-source-id').value || null;
     const contentType  = document.getElementById('field-content-type').value;
     const title        = document.getElementById('field-title').value.trim();
     const url          = document.getElementById('field-url').value.trim();
@@ -431,7 +423,7 @@
     const { error } = await sb.from('amd_posts').insert({
       platform, content_type: contentType, title, url,
       published_at: publishedAt, import_method: importMethod,
-      source_id: sourceId,          // GAP 2: persist source FK
+      source_id: sourceId,
       body, tags: theme ? [theme] : null,
       image_url: imageUrl,
       attributes: notes ? { admin_notes: notes } : null,
@@ -450,7 +442,6 @@
     ['field-platform','field-content-type','field-title','field-url','field-date',
      'field-method','field-body','field-theme','field-engagement','field-image-url','field-notes']
       .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
-    // Reset source picker
     const sourceSel = document.getElementById('field-source-id');
     sourceSel.innerHTML = '<option value="">Select platform first…</option>';
     sourceSel.disabled = true;
@@ -458,7 +449,7 @@
     const s=document.getElementById('import-status'); s.className=''; s.textContent='';
   });
 
-  // ── STEWARD LOGIC ────────────────────────────────────────────
+  // ── Steward ─────────────────────────────────────────
   function relTime(dateStr) {
     const diff=Date.now()-new Date(dateStr).getTime();
     const m=Math.floor(diff/60000), h=Math.floor(diff/3600000), d=Math.floor(diff/86400000);
@@ -474,7 +465,6 @@
     loadPendingReplies();
   }
 
-  // -- Unpublished Posts --
   async function loadUnpublished() {
     const el = document.getElementById('unpublished-list');
     const { data: posts, error } = await sb
@@ -529,7 +519,6 @@
     updateBadge();
   }
 
-  // -- Pending Replies --
   async function loadPendingReplies() {
     const el = document.getElementById('pending-replies-list');
     const { data: replies, error } = await sb
@@ -584,7 +573,6 @@
     if (remaining === 0) document.getElementById('pending-replies-list').innerHTML = '<p class="queue-empty">✓ No pending replies.</p>';
   }
 
-  // -- Badge counter on Steward tab --
   function updateBadge() {
     const unpublished = document.querySelectorAll('#unpublished-list .queue-card').length;
     const pending     = document.querySelectorAll('#pending-replies-list .queue-card').length;
@@ -599,7 +587,6 @@
     }
   }
 
-  // Boot: load sources immediately so picker is ready when admin uses the form
   loadSources();
   checkSession();
 </script>
