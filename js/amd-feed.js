@@ -45,14 +45,16 @@ function statBadge(icon, value) {
 }
 
 /**
- * Derive approved AMD discussion reply count from the nested join.
- * amd_posts → amd_discussion_threads → amd_discussion_posts (status=approved)
- * Supabase returns: post.amd_discussion_threads = [{ amd_discussion_posts: [...] }]
+ * Count approved AMD discussion replies.
+ * Supabase embedded filter syntax applied directly in the select string,
+ * so amd_discussion_posts only contains approved rows by the time we count.
+ * A post maps to at most one thread.
  */
 function getReplyCount(post) {
   const threads = post.amd_discussion_threads;
-  if (!threads || threads.length === 0) return 0;
-  return threads[0].amd_discussion_posts?.length ?? 0;
+  if (!Array.isArray(threads) || threads.length === 0) return 0;
+  const posts = threads[0].amd_discussion_posts;
+  return Array.isArray(posts) ? posts.length : 0;
 }
 
 function buildCard(post, source) {
@@ -90,9 +92,9 @@ function buildCard(post, source) {
         <div class="feed-card-stats">
           ${statBadge('❤️', post.like_count)}
           ${statBadge('💬', post.comment_count)}
-          ${statBadge('↗️', post.share_count)}
+          ${statBadge('↗1️', post.share_count)}
           ${statBadge('👁️', post.view_count)}
-          ${statBadge('🗨️', replyCount)}
+          ${replyCount > 0 ? statBadge('🗨️', replyCount) : ''}
         </div>
         <div class="feed-card-actions">
           ${post.url ? `<a class="feed-card-link" href="${post.url}" target="_blank" rel="noopener">Original ↗</a>` : ''}
@@ -119,7 +121,8 @@ export async function loadPosts(reset = false) {
   const to   = from + PAGE_SIZE - 1;
 
   // Option A: reply count via nested JOIN (no denormalization).
-  // amd_discussion_posts is filtered to status=approved so count is accurate.
+  // Embedded filter syntax (status=eq.approved) ensures only approved
+  // discussion posts are returned — count reflects approved replies only.
   let query = supabase
     .from('amd_posts')
     .select(`
@@ -130,11 +133,10 @@ export async function loadPosts(reset = false) {
       amd_content_sources!source_id ( label, theme_key ),
       amd_discussion_threads!post_id (
         id,
-        amd_discussion_posts!thread_id ( id )
+        amd_discussion_posts!thread_id ( id ).filter(status.eq.approved)
       )
     `)
     .eq('is_published', true)
-    .eq('amd_discussion_threads.amd_discussion_posts.status', 'approved')
     .order('published_at', { ascending: false })
     .range(from, to);
 
