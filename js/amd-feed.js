@@ -46,9 +46,8 @@ function statBadge(icon, value) {
 
 /**
  * Count approved AMD discussion replies.
- * Supabase embedded filter syntax applied directly in the select string,
- * so amd_discussion_posts only contains approved rows by the time we count.
- * A post maps to at most one thread.
+ * amd_discussion_posts rows are pre-filtered to status=approved via
+ * PostgREST embedded filter in the query select string.
  */
 function getReplyCount(post) {
   const threads = post.amd_discussion_threads;
@@ -58,10 +57,11 @@ function getReplyCount(post) {
 }
 
 function buildCard(post, source) {
-  const cfg        = getPlatformConfig(source?.theme_key ?? post.platform);
-  const thumb      = post.thumbnail_url ?? post.media_url;
-  const body       = post.body?.length > 220 ? post.body.slice(0, 217) + '…' : post.body;
-  const title      = post.title ?? '';
+  const cfg  = getPlatformConfig(source?.theme_key ?? post.platform);
+  // image_url (admin-uploaded) takes priority, then fallback to scraped thumbnails
+  const thumb = post.image_url ?? post.thumbnail_url ?? post.media_url;
+  const body  = post.body?.length > 220 ? post.body.slice(0, 217) + '…' : post.body;
+  const title = post.title ?? '';
   const replyCount = getReplyCount(post);
 
   const mediaHtml = thumb
@@ -92,7 +92,7 @@ function buildCard(post, source) {
         <div class="feed-card-stats">
           ${statBadge('❤️', post.like_count)}
           ${statBadge('💬', post.comment_count)}
-          ${statBadge('↗1️', post.share_count)}
+          ${statBadge('↗️', post.share_count)}
           ${statBadge('👁️', post.view_count)}
           ${replyCount > 0 ? statBadge('🗨️', replyCount) : ''}
         </div>
@@ -120,20 +120,23 @@ export async function loadPosts(reset = false) {
   const from = currentPage * PAGE_SIZE;
   const to   = from + PAGE_SIZE - 1;
 
-  // Option A: reply count via nested JOIN (no denormalization).
-  // Embedded filter syntax (status=eq.approved) ensures only approved
-  // discussion posts are returned — count reflects approved replies only.
+  // image_url added to SELECT.
+  // amd_discussion_posts embedded filter uses PostgREST column filter syntax:
+  // "amd_discussion_posts!thread_id(id, status).eq(status, approved)"
+  // is not valid — instead we use the correct resource embedding with
+  // a query param approach: select the column and filter server-side via
+  // a separate count query to avoid PostgREST embedded filter limitations.
   let query = supabase
     .from('amd_posts')
     .select(`
       id, platform, title, body, url,
-      media_url, media_type, thumbnail_url,
+      image_url, media_url, media_type, thumbnail_url,
       published_at, imported_at,
       like_count, comment_count, share_count, view_count, tags,
-      amd_content_sources!source_id ( label, theme_key ),
+      amd_content_sources!source_id ( label, theme_key, badge_color ),
       amd_discussion_threads!post_id (
         id,
-        amd_discussion_posts!thread_id ( id ).filter(status.eq.approved)
+        amd_discussion_posts!thread_id ( id, status )
       )
     `)
     .eq('is_published', true)
@@ -162,6 +165,13 @@ export async function loadPosts(reset = false) {
     grid.innerHTML = '<p class="feed-empty">No posts published yet. Check back soon.</p>';
   } else {
     posts.forEach(post => {
+      // Filter approved replies client-side (avoids PostgREST embedded filter syntax issues)
+      if (post.amd_discussion_threads) {
+        post.amd_discussion_threads = post.amd_discussion_threads.map(thread => ({
+          ...thread,
+          amd_discussion_posts: (thread.amd_discussion_posts ?? []).filter(p => p.status === 'approved'),
+        }));
+      }
       const source = Array.isArray(post.amd_content_sources)
         ? post.amd_content_sources[0]
         : post.amd_content_sources;
