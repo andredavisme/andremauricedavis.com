@@ -58,6 +58,7 @@
     input[type="text"], input[type="url"], input[type="date"], select, textarea { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 5px; font-size: 13px; transition: border-color 0.15s; }
     input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
     textarea { resize: vertical; min-height: 80px; }
+    select:disabled { opacity: 0.45; cursor: not-allowed; }
 
     /* ENRICHMENT COLLAPSIBLE */
     .collapsible-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; max-width: 800px; margin-top: 20px; user-select: none; }
@@ -91,6 +92,9 @@
     #import-status { margin-top: 14px; font-size: 13px; max-width: 800px; padding: 8px 12px; border-radius: 5px; display: none; }
     #import-status.success { background: var(--success-bg); color: var(--success); display: block; }
     #import-status.error   { background: var(--danger-bg);  color: var(--danger);  display: block; }
+
+    /* SOURCE BADGE inline in select option */
+    .source-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
     /* STEWARD QUEUE CARDS */
     .queue-list { display: flex; flex-direction: column; gap: 10px; max-width: 900px; }
@@ -174,6 +178,16 @@
         </select>
       </div>
       <div>
+        <!-- GAP 2: Source picker — cascades off Platform selection.
+             Loads active rows from amd_content_sources filtered by chosen platform.
+             Disabled until a platform is chosen. Stores source_id on the post row. -->
+        <label>Source</label>
+        <select id="field-source-id" disabled>
+          <option value="">Select platform first…</option>
+        </select>
+        <div class="source-hint" id="source-hint"></div>
+      </div>
+      <div>
         <label>Content Type *</label>
         <select id="field-content-type" required>
           <option value="">Select type…</option>
@@ -182,6 +196,15 @@
           <option value="article">Article</option>
           <option value="thread">Thread</option>
           <option value="comment">Comment</option>
+        </select>
+      </div>
+      <div>
+        <label>Import Method</label>
+        <select id="field-method">
+          <option value="api">API</option>
+          <option value="rss">RSS</option>
+          <option value="programmatic">Programmatic</option>
+          <option value="manual">Manual</option>
         </select>
       </div>
       <div class="full">
@@ -195,15 +218,6 @@
       <div>
         <label>Published Date *</label>
         <input type="date" id="field-date" required />
-      </div>
-      <div>
-        <label>Import Method</label>
-        <select id="field-method">
-          <option value="api">API</option>
-          <option value="rss">RSS</option>
-          <option value="programmatic">Programmatic</option>
-          <option value="manual">Manual</option>
-        </select>
       </div>
     </form>
     <div class="collapsible-header" id="enrichment-toggle">
@@ -225,9 +239,6 @@
           <input type="text" id="field-engagement" placeholder="e.g. likes, views, shares count" />
         </div>
         <div class="full">
-          <!-- CHANGED: was "Media URL (thumbnail / video)" saving to thumbnail_url.
-               Now "Image URL" saving to image_url — the admin-curated display image column.
-               thumbnail_url remains reserved for API/scraper auto-population. -->
           <label>Image URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(displayed on feed &amp; thread cards)</span></label>
           <input type="url" id="field-image-url" placeholder="https://…" />
         </div>
@@ -325,10 +336,84 @@
   const enrichBody   = document.getElementById('enrichment-body');
   enrichToggle.addEventListener('click', () => { enrichToggle.classList.toggle('open'); enrichBody.classList.toggle('open'); });
 
+  // ── GAP 2: Source picker ─────────────────────────────────────
+  // Cache all active sources so we only fetch once per page load.
+  let allSources = [];
+
+  async function loadSources() {
+    const { data, error } = await sb
+      .from('amd_content_sources')
+      .select('id, platform, label, source_url, import_method')
+      .eq('is_active', true)
+      .order('label');
+    if (!error && data) allSources = data;
+  }
+
+  function populateSourcePicker(platform) {
+    const sel  = document.getElementById('field-source-id');
+    const hint = document.getElementById('source-hint');
+    sel.innerHTML = '';
+
+    const filtered = allSources.filter(s => s.platform === platform);
+
+    if (filtered.length === 0) {
+      sel.innerHTML = '<option value="">No sources configured for this platform</option>';
+      sel.disabled = true;
+      hint.textContent = 'Add a source in amd_content_sources to enable selection.';
+      return;
+    }
+
+    // First option: blank (optional — post can exist without a source FK)
+    const blank = document.createElement('option');
+    blank.value = '';
+    blank.textContent = 'No specific source…';
+    sel.appendChild(blank);
+
+    filtered.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = s.label;
+      opt.dataset.method = s.import_method;
+      sel.appendChild(opt);
+    });
+
+    sel.disabled = false;
+    hint.textContent = '';
+
+    // Auto-select if only one option
+    if (filtered.length === 1) {
+      sel.value = filtered[0].id;
+      // Carry the source's import_method into the method field as a helpful default
+      document.getElementById('field-method').value = filtered[0].import_method || 'manual';
+    }
+  }
+
+  document.getElementById('field-platform').addEventListener('change', function () {
+    const platform = this.value;
+    const sourceSel = document.getElementById('field-source-id');
+    const hint      = document.getElementById('source-hint');
+    if (!platform) {
+      sourceSel.innerHTML = '<option value="">Select platform first…</option>';
+      sourceSel.disabled = true;
+      hint.textContent = '';
+      return;
+    }
+    populateSourcePicker(platform);
+  });
+
+  // When a source is picked, sync its import_method to the method dropdown
+  document.getElementById('field-source-id').addEventListener('change', function () {
+    const selected = this.options[this.selectedIndex];
+    if (selected && selected.dataset.method) {
+      document.getElementById('field-method').value = selected.dataset.method;
+    }
+  });
+
   // ── Import submit ────────────────────────────────────────────
   document.getElementById('submit-import').addEventListener('click', async () => {
     const status = document.getElementById('import-status');
     const platform     = document.getElementById('field-platform').value;
+    const sourceId     = document.getElementById('field-source-id').value || null; // GAP 2: include source FK
     const contentType  = document.getElementById('field-content-type').value;
     const title        = document.getElementById('field-title').value.trim();
     const url          = document.getElementById('field-url').value.trim();
@@ -336,7 +421,6 @@
     const importMethod = document.getElementById('field-method').value;
     const body         = document.getElementById('field-body').value.trim() || null;
     const theme        = document.getElementById('field-theme').value.trim() || null;
-    // CHANGED: read from field-image-url, save to image_url column
     const imageUrl     = document.getElementById('field-image-url').value.trim() || null;
     const notes        = document.getElementById('field-notes').value.trim() || null;
 
@@ -347,8 +431,9 @@
     const { error } = await sb.from('amd_posts').insert({
       platform, content_type: contentType, title, url,
       published_at: publishedAt, import_method: importMethod,
+      source_id: sourceId,          // GAP 2: persist source FK
       body, tags: theme ? [theme] : null,
-      image_url: imageUrl,          // ← was thumbnail_url: mediaUrl
+      image_url: imageUrl,
       attributes: notes ? { admin_notes: notes } : null,
       is_published: false,
     });
@@ -365,6 +450,11 @@
     ['field-platform','field-content-type','field-title','field-url','field-date',
      'field-method','field-body','field-theme','field-engagement','field-image-url','field-notes']
       .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    // Reset source picker
+    const sourceSel = document.getElementById('field-source-id');
+    sourceSel.innerHTML = '<option value="">Select platform first…</option>';
+    sourceSel.disabled = true;
+    document.getElementById('source-hint').textContent = '';
     const s=document.getElementById('import-status'); s.className=''; s.textContent='';
   });
 
@@ -509,6 +599,8 @@
     }
   }
 
+  // Boot: load sources immediately so picker is ready when admin uses the form
+  loadSources();
   checkSession();
 </script>
 </body>
