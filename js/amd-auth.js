@@ -17,6 +17,15 @@ const BASE_PATH = window.location.hostname === 'andredavisme.github.io'
   ? '/andremauricedavis.com'
   : '';
 
+// Explicit redirect URLs — hardcoded to prevent fallback to other project's Site URL.
+// Dynamic construction (window.location.origin + BASE_PATH) was ambiguous to Supabase
+// and caused it to fall back to the shared project's Site URL on auth callback.
+const REDIRECT_URL = window.location.hostname === 'andredavisme.github.io'
+  ? 'https://andredavisme.github.io/andremauricedavis.com/feed.html'
+  : window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? window.location.origin + '/feed.html'
+  : 'https://andremauricedavis.com/feed.html';
+
 // storageKey namespaces auth tokens away from other projects on the same Supabase instance.
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { storageKey: 'amd-platform-auth' },
@@ -68,7 +77,7 @@ export async function signInWithGoogle() {
   await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin + BASE_PATH + '/feed.html',
+      redirectTo: REDIRECT_URL,
     },
   });
 }
