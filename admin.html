@@ -225,8 +225,11 @@
           <input type="text" id="field-engagement" placeholder="e.g. likes, views, shares count" />
         </div>
         <div class="full">
-          <label>Media URL (thumbnail / video)</label>
-          <input type="url" id="field-media-url" placeholder="https://…" />
+          <!-- CHANGED: was "Media URL (thumbnail / video)" saving to thumbnail_url.
+               Now "Image URL" saving to image_url — the admin-curated display image column.
+               thumbnail_url remains reserved for API/scraper auto-population. -->
+          <label>Image URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(displayed on feed &amp; thread cards)</span></label>
+          <input type="url" id="field-image-url" placeholder="https://…" />
         </div>
         <div class="full">
           <label>Admin Notes</label>
@@ -243,19 +246,14 @@
 
   <!-- STEWARD TAB -->
   <div id="tab-steward" class="tab-content">
-
-    <!-- Section 1: Unpublished Posts -->
     <div class="section-label">Unpublished Posts — Promote to Feed</div>
     <div id="unpublished-list" class="queue-list">
       <p class="queue-loading">Loading…</p>
     </div>
-
-    <!-- Section 2: Pending Discussion Replies -->
     <div class="section-label mt">Pending Discussion Replies — Approve or Reject</div>
     <div id="pending-replies-list" class="queue-list">
       <p class="queue-loading">Loading…</p>
     </div>
-
   </div>
 
   <!-- ANALYSIS TAB -->
@@ -269,17 +267,17 @@
 </div>
 
 <script>
-  const SUPABASE_URL = 'https://nmemmfblpzrkwyljpmvp.supabase.co';
+  const SUPABASE_URL = 'https://hhyhulqngdkwsxhymmcd.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_Lc7rXKQ-1TJaQFu7a-nOVQ_5Sf3x__M';
   const { createClient } = supabase;
   const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
   const SUPER_ADMIN_EMAIL = 'andre.davis.me@gmail.com';
 
-  const authScreen  = document.getElementById('auth-screen');
+  const authScreen   = document.getElementById('auth-screen');
   const accessDenied = document.getElementById('access-denied');
-  const adminHeader = document.getElementById('admin-header');
-  const adminUi     = document.getElementById('admin-ui');
-  const headerEmail = document.getElementById('header-email');
+  const adminHeader  = document.getElementById('admin-header');
+  const adminUi      = document.getElementById('admin-ui');
+  const headerEmail  = document.getElementById('header-email');
 
   // ── Auth ──────────────────────────────────────────────────────
   async function checkSession() {
@@ -295,9 +293,9 @@
     showAdmin(user.email);
   }
 
-  function showAuth() { authScreen.style.display='flex'; accessDenied.style.display='none'; adminHeader.style.display='none'; adminUi.style.display='none'; }
-  function showAccessDenied() { authScreen.style.display='none'; accessDenied.style.display='flex'; adminHeader.style.display='none'; adminUi.style.display='none'; }
-  function showAdmin(email) { authScreen.style.display='none'; accessDenied.style.display='none'; adminHeader.style.display='flex'; adminUi.style.display='flex'; headerEmail.textContent=email; }
+  function showAuth()        { authScreen.style.display='flex';  accessDenied.style.display='none'; adminHeader.style.display='none'; adminUi.style.display='none'; }
+  function showAccessDenied(){ authScreen.style.display='none';  accessDenied.style.display='flex'; adminHeader.style.display='none'; adminUi.style.display='none'; }
+  function showAdmin(email)  { authScreen.style.display='none';  accessDenied.style.display='none'; adminHeader.style.display='flex'; adminUi.style.display='flex'; headerEmail.textContent=email; }
 
   document.getElementById('google-signin-btn').addEventListener('click', async () => {
     await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
@@ -307,7 +305,7 @@
   });
   sb.auth.onAuthStateChange(async (_e, session) => { if (session) await resolveUser(session.user); else showAuth(); });
 
-  // ── Tabs ──────────────────────────────────────────────────────
+  // ── Tabs ─────────────────────────────────────────────────────
   let stewardLoaded = false;
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -327,45 +325,50 @@
   const enrichBody   = document.getElementById('enrichment-body');
   enrichToggle.addEventListener('click', () => { enrichToggle.classList.toggle('open'); enrichBody.classList.toggle('open'); });
 
-  // ── Import submit ─────────────────────────────────────────────
+  // ── Import submit ────────────────────────────────────────────
   document.getElementById('submit-import').addEventListener('click', async () => {
     const status = document.getElementById('import-status');
-    const platform    = document.getElementById('field-platform').value;
-    const contentType = document.getElementById('field-content-type').value;
-    const title       = document.getElementById('field-title').value.trim();
-    const url         = document.getElementById('field-url').value.trim();
-    const publishedAt = document.getElementById('field-date').value;
+    const platform     = document.getElementById('field-platform').value;
+    const contentType  = document.getElementById('field-content-type').value;
+    const title        = document.getElementById('field-title').value.trim();
+    const url          = document.getElementById('field-url').value.trim();
+    const publishedAt  = document.getElementById('field-date').value;
     const importMethod = document.getElementById('field-method').value;
-    const body        = document.getElementById('field-body').value.trim() || null;
-    const theme       = document.getElementById('field-theme').value.trim() || null;
-    const mediaUrl    = document.getElementById('field-media-url').value.trim() || null;
-    const notes       = document.getElementById('field-notes').value.trim() || null;
+    const body         = document.getElementById('field-body').value.trim() || null;
+    const theme        = document.getElementById('field-theme').value.trim() || null;
+    // CHANGED: read from field-image-url, save to image_url column
+    const imageUrl     = document.getElementById('field-image-url').value.trim() || null;
+    const notes        = document.getElementById('field-notes').value.trim() || null;
+
     if (!platform || !contentType || !title || !url || !publishedAt) {
       status.className = 'error'; status.textContent = '⚠ Please complete all required fields.'; return;
     }
+
     const { error } = await sb.from('amd_posts').insert({
       platform, content_type: contentType, title, url,
       published_at: publishedAt, import_method: importMethod,
-      body, tags: theme ? [theme] : null, thumbnail_url: mediaUrl,
-      attributes: notes ? { admin_notes: notes } : null, is_published: false,
+      body, tags: theme ? [theme] : null,
+      image_url: imageUrl,          // ← was thumbnail_url: mediaUrl
+      attributes: notes ? { admin_notes: notes } : null,
+      is_published: false,
     });
+
     if (error) { status.className='error'; status.textContent='✗ Error: '+error.message; }
     else {
       status.className='success'; status.textContent='✓ Post added (unpublished — promote via Steward tab).';
       document.getElementById('clear-import').click();
-      stewardLoaded = false; // reset so steward reloads fresh next visit
+      stewardLoaded = false;
     }
   });
 
   document.getElementById('clear-import').addEventListener('click', () => {
     ['field-platform','field-content-type','field-title','field-url','field-date',
-     'field-method','field-body','field-theme','field-engagement','field-media-url','field-notes']
+     'field-method','field-body','field-theme','field-engagement','field-image-url','field-notes']
       .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
     const s=document.getElementById('import-status'); s.className=''; s.textContent='';
   });
 
-  // ── STEWARD LOGIC ─────────────────────────────────────────────
-
+  // ── STEWARD LOGIC ────────────────────────────────────────────
   function relTime(dateStr) {
     const diff=Date.now()-new Date(dateStr).getTime();
     const m=Math.floor(diff/60000), h=Math.floor(diff/3600000), d=Math.floor(diff/86400000);
@@ -394,7 +397,6 @@
     if (error) { el.innerHTML = `<p class="queue-empty">✗ Error loading posts: ${error.message}</p>`; return; }
     if (!posts || posts.length === 0) { el.innerHTML = '<p class="queue-empty">✓ No unpublished posts.</p>'; return; }
 
-    // Update Steward tab badge
     updateBadge(posts.length);
 
     el.innerHTML = posts.map(p => `
@@ -409,16 +411,16 @@
           ${p.url  ? `<div class="queue-card-url"><a href="${p.url}" target="_blank" rel="noopener">${p.url}</a></div>` : ''}
         </div>
         <div class="queue-card-actions">
-          <button class="btn-sm btn-publish" onclick="publishPost('${p.id}', true)">Publish → Feed</button>
+          <button class="btn-sm btn-publish" onclick="publishPost('${p.id}')">Publish → Feed</button>
           <button class="btn-sm btn-reject"  onclick="deletePost('${p.id}')">Delete</button>
         </div>
       </div>
     `).join('');
   }
 
-  async function publishPost(id, publish) {
+  async function publishPost(id) {
     const card = document.getElementById('post-card-' + id);
-    const { error } = await sb.from('amd_posts').update({ is_published: publish }).eq('id', id);
+    const { error } = await sb.from('amd_posts').update({ is_published: true }).eq('id', id);
     if (error) { alert('Error: ' + error.message); return; }
     if (card) card.remove();
     const remaining = document.querySelectorAll('#unpublished-list .queue-card').length;
@@ -457,25 +459,21 @@
     if (error) { el.innerHTML = `<p class="queue-empty">✗ Error loading replies: ${error.message}</p>`; return; }
     if (!replies || replies.length === 0) { el.innerHTML = '<p class="queue-empty">✓ No pending replies.</p>'; return; }
 
-    // Update badge with combined count
     updateBadge();
 
     el.innerHTML = replies.map(r => {
-      const user    = Array.isArray(r.amd_users) ? r.amd_users[0] : r.amd_users;
-      const thread  = Array.isArray(r.amd_discussion_threads) ? r.amd_discussion_threads[0] : r.amd_discussion_threads;
-      const post    = Array.isArray(thread?.amd_posts) ? thread.amd_posts[0] : thread?.amd_posts;
-      const postTitle = post?.title ?? 'Unknown post';
-      const platform  = post?.platform ?? '';
-      const postId    = post?.id ?? '';
+      const user   = Array.isArray(r.amd_users) ? r.amd_users[0] : r.amd_users;
+      const thread = Array.isArray(r.amd_discussion_threads) ? r.amd_discussion_threads[0] : r.amd_discussion_threads;
+      const post   = Array.isArray(thread?.amd_posts) ? thread.amd_posts[0] : thread?.amd_posts;
       return `
         <div class="queue-card" id="reply-card-${r.id}">
           <div>
             <div class="queue-card-meta">
-              <span class="platform-tag">${platform}</span>
+              <span class="platform-tag">${post?.platform ?? ''}</span>
               <span>👤 ${user?.display_name ?? 'Unknown user'}</span>
               <span>${relTime(r.created_at)}</span>
             </div>
-            <div class="queue-card-context">Re: ${postTitle}</div>
+            <div class="queue-card-context">Re: ${post?.title ?? 'Unknown post'}</div>
             <div class="queue-card-body" style="max-height:none;margin-top:6px">${r.body}</div>
           </div>
           <div class="queue-card-actions">
