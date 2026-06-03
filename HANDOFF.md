@@ -250,64 +250,82 @@ Rules every agent must follow throughout a session, in addition to reading this 
 
 ---
 
-### Session 005 — Gap 2: Cascading Source Picker in Import Tab
+### Session 005 — Credential Audit (Gaps 3 & 4) + Gap 5 Diagnosis + Gap 6 Assessment
 
 **Date:** 2026-06-03
 **Session opened:** 2:09 PM EDT
-**Session closed:** ongoing
-**Active working time:** ~ongoing
-**Actual elapsed time:** ~ongoing
+**Session closed:** 2:29 PM EDT
+**Active working time:** ~20 minutes
+**Actual elapsed time:** ~20 minutes
 
-#### Problem Statement (Gap 2)
+#### Problem Statement
 
-The Import tab had a hardcoded Platform dropdown but no way to tie an imported post to a specific *source account* within that platform (e.g., "Andre Davis — Facebook Profile" vs. a group page). The `amd_posts` table has a `source_id` FK to `amd_content_sources` but the form was not populating it.
+A credential mismatch was introduced in a prior session: `amd-auth.js` and `admin.html` contained Supabase publishable keys from the wrong project. Additionally, Google OAuth had never been enabled on the correct Supabase project, blocking all user login. The feed stack (`feed.html` + `amd-feed.js`) was also assessed to determine if it was build-complete.
 
 #### Decisions Made
 
-- **Source picker is optional:** A post can be saved without a source FK. The blank "No specific source…" option is always present after a platform is selected.
-- **Cascading behavior:** Source picker is disabled until a platform is selected, then filters `amd_content_sources` by `platform` and `is_active = true`. Sources are fetched once on page load and cached in `allSources[]` to avoid repeated DB calls.
-- **Auto-select:** If only one source exists for the chosen platform, it is auto-selected and its `import_method` is mirrored to the Import Method dropdown.
-- **Sync on source change:** Changing the source also updates the Import Method dropdown to match `amd_content_sources.import_method` — prevents method/source mismatch.
-- **Seed data:** 4 starter rows inserted into `amd_content_sources` — one per platform — so the picker is functional from day one.
-- **Clear behavior:** Clicking "Clear" resets the source picker to its disabled placeholder state.
+- **Correct Supabase project credentials:** URL = `https://hhyhulqngdkwsxhymmcd.supabase.co`, Key = `sb_publishable_haKvwV0M7KMj4Qz69M6WGg_KmIfU-aI`. Any file containing different credentials is wrong and must be corrected.
+- **Gap numbering convention established:** Gaps are incremental issue identifiers tracked across sessions. Gaps 3 and 4 were credential fixes. Gap 5 is Google OAuth config (manual). Gap 6 is first published post (data gap, not code).
+- **Gap 5 is manual:** Google OAuth provider must be enabled in the Supabase Auth dashboard and a Google Cloud Console OAuth 2.0 client must be created. Cannot be done programmatically by an agent.
+- **Gap 6 is a data gap:** `feed.html` and `amd-feed.js` are fully built and correct. The feed shows "No posts yet" because `amd_posts` has no `is_published = true` rows. Gap 6 is closed by importing and publishing one post via `admin.html` after gap 5 (OAuth) is working.
+- **`login.html` and `feed.html` are clean:** Both import from `amd-auth.js` and contain no hardcoded credentials. Only `admin.html` had the wrong key.
 
 #### Tasks Completed
 
-- [x] Seeded `amd_content_sources` with 4 rows (one per platform: Facebook, Reddit, LinkedIn, YouTube)
-- [x] Updated `admin.html` — gap 2 cascading source picker implemented:
-  - `loadSources()` — fetches all active sources once at page load, caches in `allSources[]`
-  - `populateSourcePicker(platform)` — filters cache, builds options, handles empty state
-  - Platform change listener — calls `populateSourcePicker` or resets picker
-  - Source change listener — syncs `import_method` dropdown
-  - `submit-import` updated to read `field-source-id` and write `source_id` to `amd_posts`
-  - `clear-import` updated to reset source picker
-- [x] Confirmed push via commit [`16d7efca`](https://github.com/andredavisme/andremauricedavis.com/commit/16d7efcae28a033cf1d03fd8af1cc798c860b38c)
-- [x] Updated `HANDOFF.md` — Session 005 documented
+- [x] **Gap 3** — Fixed `js/amd-auth.js`: corrected both `SUPABASE_URL` and `SUPABASE_KEY` to match project `hhyhulqngdkwsxhymmcd`. Confirmed via commit [`9bc7708`](https://github.com/andredavisme/andremauricedavis.com/commit/9bc770857c6ec11e8056fe71c6500a2bc8787307)
+- [x] **Gap 4** — Fixed `admin.html`: corrected `SUPABASE_KEY` (URL was already correct, key was from wrong project). Confirmed via commit [`96d3baa`](https://github.com/andredavisme/andremauricedavis.com/commit/96d3baabf82296a079e2fb99c0f89bece52237d8)
+- [x] **Gap 5 diagnosed** — Auth logs confirmed `"provider is not enabled"` for Google OAuth on project `hhyhulqngdkwsxhymmcd`. Handed off to user with full step-by-step instructions (see below).
+- [x] **Gap 6 assessed** — `feed.html` and `js/amd-feed.js` verified as fully built. Gap 6 is a data task: import + publish one post via admin panel once OAuth works.
 
-#### Seeded Sources
+#### Gap 5 — Google OAuth Manual Setup Instructions
 
-| Platform | Label | Import Method |
-|---|---|---|
-| facebook | Andre Davis — Facebook Profile | manual |
-| reddit | u/andremauricedavis — Reddit | manual |
-| linkedin | Andre Davis — LinkedIn | manual |
-| youtube | Andre Davis — YouTube Channel | manual |
+> **To be completed by user (cannot be done by agent).**
+
+**Step 1 — Google Cloud Console:**
+1. Go to [console.cloud.google.com](https://console.cloud.google.com)
+2. Create or select a project (e.g. "AMD Platform")
+3. APIs & Services → Credentials → Create Credentials → OAuth 2.0 Client ID
+4. Application type: Web application
+5. Authorized redirect URI: `https://hhyhulqngdkwsxhymmcd.supabase.co/auth/v1/callback`
+6. Copy Client ID and Client Secret
+
+**Step 2 — Supabase Auth Dashboard:**
+1. Go to: https://supabase.com/dashboard/project/hhyhulqngdkwsxhymmcd/auth/providers
+2. Find Google → Enable → paste Client ID and Client Secret → Save
+
+**Step 3 — Supabase Redirect URL Allowlist:**
+1. In Auth → URL Configuration, add:
+   - `https://andredavisme.github.io/andremauricedavis.com/feed.html`
+   - `https://andremauricedavis.com/feed.html`
+   - `http://localhost:*/feed.html`
+
+#### Credential Audit — Final State
+
+| File | URL | Key | Status |
+|---|---|---|---|
+| `js/amd-auth.js` | `hhyhulqngdkwsxhymmcd` | `haKvwV0M…` | ✅ Correct |
+| `admin.html` | `hhyhulqngdkwsxhymmcd` | `haKvwV0M…` | ✅ Fixed gap 4 |
+| `login.html` | imports `amd-auth.js` | — | ✅ No hardcoded creds |
+| `feed.html` | imports `amd-auth.js` | — | ✅ No hardcoded creds |
+| `thread.html` | imports `amd-auth.js` | — | ✅ No hardcoded creds |
 
 #### Tasks Left Open (carried to Session 006)
 
-- [ ] Schema data inventory — audit `amd_posts` and `amd_content_sources` against design proof requirements
-- [ ] Build the public-facing content feed page (`feed.html` or integrated into `index.html`)
-- [ ] Build the discussion thread view
+- [ ] **Gap 5** — Enable Google OAuth on Supabase project `hhyhulqngdkwsxhymmcd` (manual — user action required, instructions above)
+- [ ] **Gap 6** — Import and publish first post via `admin.html` to verify full feed pipeline end-to-end (requires gap 5 complete)
+- [ ] **Gap 7** — Verify `thread.html` end-to-end: click Discuss on a feed card → thread loads → user can submit a reply → reply appears in Steward pending queue → admin approves → reply visible on thread
 - [ ] Configure GitHub Pages custom domain (CNAME file → Hostinger DNS update)
 - [ ] Decide on content source priority order (API vs RSS vs programmatic vs manual) per platform
-- [ ] Google OAuth setup (Supabase Auth provider configuration)
-- [ ] Gap 3+ audit — identify next admin.html or frontend gaps to close
+- [ ] `amd_users` provisioning — confirm that a new Google OAuth login auto-creates a row in `amd_users` (or add a trigger/edge function to do so)
 
 #### Relevant Links
 
-- admin.html (updated): https://github.com/andredavisme/andremauricedavis.com/blob/main/admin.html
-- Confirming commit: https://github.com/andredavisme/andremauricedavis.com/commit/16d7efcae28a033cf1d03fd8af1cc798c860b38c
-- Supabase amd_content_sources: https://supabase.com/dashboard/project/hhyhulqngdkwsxhymmcd/editor (query: `SELECT * FROM amd_content_sources`)
+- Gap 3 fix commit: https://github.com/andredavisme/andremauricedavis.com/commit/9bc770857c6ec11e8056fe71c6500a2bc8787307
+- Gap 4 fix commit: https://github.com/andredavisme/andremauricedavis.com/commit/96d3baabf82296a079e2fb99c0f89bece52237d8
+- Supabase Auth Providers: https://supabase.com/dashboard/project/hhyhulqngdkwsxhymmcd/auth/providers
+- feed.html: https://github.com/andredavisme/andremauricedavis.com/blob/main/feed.html
+- js/amd-feed.js: https://github.com/andredavisme/andremauricedavis.com/blob/main/js/amd-feed.js
+- admin.html: https://github.com/andredavisme/andremauricedavis.com/blob/main/admin.html
 
 ---
 
@@ -319,9 +337,9 @@ The Import tab had a hardcoded Platform dropdown but no way to tie an imported p
 | 002 | 2026-06-02 | 11:42 AM EDT | 12:04 PM EDT | ~22 min | ~22 min |
 | 003 | 2026-06-02 | 3:25 PM EDT | 3:44 PM EDT | ~19 min | ~19 min |
 | 004 | 2026-06-02 | 4:03 PM EDT | ~4:15 PM EDT | ~12 min | ~12 min |
-| 005 | 2026-06-03 | 2:09 PM EDT | ongoing | ~ongoing | ~ongoing |
-| **Total** | | | | **~62 min + Session 005** | |
+| 005 | 2026-06-03 | 2:09 PM EDT | 2:29 PM EDT | ~20 min | ~20 min |
+| **Total** | | | | **~82 min** | |
 
 ---
 
-*Last updated: 2026-06-03 by agent — Session 005 in progress.*
+*Last updated: 2026-06-03 by agent — Session 005 closed.*
