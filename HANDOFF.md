@@ -38,6 +38,8 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 | Catalog Doc | `CATALOG.md` in repo root |
 | Tutorial Doc | `TUTORIAL.md` in repo root |
 | Design Proof | `design-test.html` in repo root |
+| Auth Portal Repo | https://github.com/andredavisme/amd-auth |
+| Auth Portal Domain | https://auth.andremauricedavis.com |
 
 ---
 
@@ -329,6 +331,70 @@ A credential mismatch was introduced in a prior session: `amd-auth.js` and `admi
 
 ---
 
+### Session 006 — Unified Auth Portal + Cross-Property Redirects
+
+**Date:** 2026-06-04
+**Session opened:** 8:20 AM EDT
+**Session closed:** 9:27 AM EDT
+**Active working time:** ~67 minutes
+**Actual elapsed time:** ~67 minutes
+
+#### Problem Statement
+
+Google OAuth on `andremauricedavis.com` was redirecting to another property in the shared Supabase project, creating confusion and blocking a clean cross-property auth experience. The user decided the correct long-term architecture is a dedicated landing-page auth portal that can serve current and future properties.
+
+#### Decisions Made
+
+- **Canonical auth entry point:** `https://auth.andremauricedavis.com` is now the dedicated unified auth portal for all AMD properties.
+- **Architecture direction:** Every protected property redirects unauthenticated users to the auth portal with `?return=<current-url>`. The portal authenticates, then returns users to the origin page.
+- **Auth methods at portal:** Support both Google OAuth and email/password on the portal so different projects can share one sign-in surface.
+- **Shared Supabase project:** Confirmed that both `andremauricedavis.com` and `personal-ledger-public-display` use the same Supabase project `hhyhulqngdkwsxhymmcd`.
+- **Session storage strategy:** Removed custom `storageKey` usage from `andremauricedavis.com`. All AMD properties should use the Supabase default auth storage key so the portal and properties share one session model.
+- **Legacy local login page:** `login.html` in `andremauricedavis.com` is retained only as a redirect shim to the auth portal for backward compatibility.
+- **Manual infra completed by user during session:** Hostinger DNS for `auth.andremauricedavis.com`, GitHub Pages enablement for `amd-auth`, Supabase Site URL / redirect allowlist updates, and Google Cloud Console redirect updates were all completed.
+
+#### Tasks Completed
+
+- [x] Created new GitHub repo: https://github.com/andredavisme/amd-auth
+- [x] Built `amd-auth/index.html` — AMD Ember portal UI with Google OAuth, email/password sign-in, `?return=` handling, origin allowlist, and dark mode toggle
+- [x] Added `CNAME` to `amd-auth` for `auth.andremauricedavis.com`
+- [x] Added `README.md` in `amd-auth` documenting how future properties join the portal
+- [x] Updated `andremauricedavis.com/js/amd-auth.js` to remove local Google OAuth flow and redirect unauthenticated users to the auth portal
+- [x] Removed custom `storageKey` override from `andremauricedavis.com/js/amd-auth.js`
+- [x] Updated `personal-ledger-public-display/assets/js/auth.js` to replace local login modal with portal redirect
+- [x] Converted `andremauricedavis.com/login.html` into an instant redirect shim to `https://auth.andremauricedavis.com`
+
+#### Commits
+
+| Commit | Repo | Purpose |
+|---|---|---|
+| [`363daff`](https://github.com/andredavisme/amd-auth/commit/363daff237cf5eb442169ec37717bff182636330) | `amd-auth` | Initial auth portal — AMD Ember design, Google + email/password, `?return=` handling |
+| [`24bf6d3`](https://github.com/andredavisme/andremauricedavis.com/commit/24bf6d3f96705d3ac3a1b5cdfc543b7cf985b0ca) | `andremauricedavis.com` | Replace local OAuth with `auth.andremauricedavis.com` portal redirect |
+| [`2b67a73`](https://github.com/andredavisme/personal-ledger-public-display/commit/2b67a73d2d9374e6207a9584df46e74e2efd8adf) | `personal-ledger-public-display` | Replace local auth modal with portal redirect |
+| [`2e7f572`](https://github.com/andredavisme/andremauricedavis.com/commit/2e7f572931e2e502ef3f810728076c8f2f94d37b) | `andremauricedavis.com` | Convert `login.html` to instant redirect shim |
+
+#### Tasks Left Open (carried to Session 007)
+
+- [ ] **Gap 6** — Import and publish first post via `admin.html` to verify the full feed pipeline end-to-end
+- [ ] **Gap 7** — Verify `thread.html` end-to-end: click Discuss on a feed card → thread loads → user can submit a reply → reply appears in Steward pending queue → admin approves → reply visible on thread
+- [ ] **Unified auth testing** — Test the full redirect flow end-to-end after DNS propagation: AMD site → auth portal → return; ledger → auth portal → return
+- [ ] **Portal hardening** — Confirm allowlist entries are complete for every current property and trim any temporary localhost/testing entries later
+- [ ] Decide on content source priority order (API vs RSS vs programmatic vs manual) per platform
+- [ ] `amd_users` provisioning — confirm that first login through the portal auto-creates a row in `amd_users` on protected AMD pages and decide whether that logic belongs in app code, trigger, or edge function
+
+#### Relevant Links
+
+- Auth Portal Repo: https://github.com/andredavisme/amd-auth
+- Auth Portal Domain: https://auth.andremauricedavis.com
+- Auth Portal initial commit: https://github.com/andredavisme/amd-auth/commit/363daff237cf5eb442169ec37717bff182636330
+- AMD portal redirect commit: https://github.com/andredavisme/andremauricedavis.com/commit/24bf6d3f96705d3ac3a1b5cdfc543b7cf985b0ca
+- Ledger portal redirect commit: https://github.com/andredavisme/personal-ledger-public-display/commit/2b67a73d2d9374e6207a9584df46e74e2efd8adf
+- login.html redirect shim commit: https://github.com/andredavisme/andremauricedavis.com/commit/2e7f572931e2e502ef3f810728076c8f2f94d37b
+- Supabase Auth URL Configuration: https://supabase.com/dashboard/project/hhyhulqngdkwsxhymmcd/auth/url-configuration
+- Supabase Auth Providers: https://supabase.com/dashboard/project/hhyhulqngdkwsxhymmcd/auth/providers
+
+---
+
 ## Time Summary
 
 | Session | Date | Open | Close | Active | Elapsed |
@@ -338,8 +404,9 @@ A credential mismatch was introduced in a prior session: `amd-auth.js` and `admi
 | 003 | 2026-06-02 | 3:25 PM EDT | 3:44 PM EDT | ~19 min | ~19 min |
 | 004 | 2026-06-02 | 4:03 PM EDT | ~4:15 PM EDT | ~12 min | ~12 min |
 | 005 | 2026-06-03 | 2:09 PM EDT | 2:29 PM EDT | ~20 min | ~20 min |
-| **Total** | | | | **~82 min** | |
+| 006 | 2026-06-04 | 8:20 AM EDT | 9:27 AM EDT | ~67 min | ~67 min |
+| **Total** | | | | **~149 min** | |
 
 ---
 
-*Last updated: 2026-06-03 by agent — Session 005 closed.*
+*Last updated: 2026-06-04 by agent — Session 006 closed.*
