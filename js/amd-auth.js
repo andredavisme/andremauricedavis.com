@@ -39,6 +39,7 @@ export async function requireAuth() {
   window.amdSession = session;
 
   // Upsert amd_users row (creates on first login, updates on return)
+  // role: 'user' matches the amd_users table default — do not change to 'member'
   const { data: user, error } = await supabase
     .from('amd_users')
     .upsert(
@@ -46,7 +47,7 @@ export async function requireAuth() {
         auth_user_id: session.user.id,
         display_name: session.user.user_metadata?.full_name ?? null,
         avatar_url: session.user.user_metadata?.avatar_url ?? null,
-        role: 'member',
+        role: 'user',
         is_active: true,
         updated_at: new Date().toISOString(),
       },
