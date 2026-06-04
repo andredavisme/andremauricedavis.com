@@ -14,7 +14,7 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 - **Admin panel** — import controls, data stewardship, content moderation, analysis scope tools
 - **User auth** — Google OAuth login; UUID-based user tracking (no email stored); duplicate UUID awareness for admins
 
-**Hosting:** GitHub Pages (development/review) → `andremauricedavis.com` via Hostinger (production)
+**Hosting:** GitHub Pages → `andremauricedavis.com` via Hostinger DNS (A records set; propagation in progress as of Session 007)
 **Repo:** https://github.com/andredavisme/andremauricedavis.com
 **Database:** Supabase — `andredavisme's Project` (`hhyhulqngdkwsxhymmcd`, `us-west-2`)
 **Database convention:** All tables for this project use the `amd_` prefix (e.g., `amd_posts`, `amd_users`) to avoid collisions with ~100+ existing tables in the shared public schema. No separate schemas — public only.
@@ -27,7 +27,7 @@ A consolidated personal platform that aggregates content from Facebook, Reddit, 
 |---|---|
 | GitHub Repo | https://github.com/andredavisme/andremauricedavis.com |
 | GitHub Pages URL | https://andredavisme.github.io/andremauricedavis.com |
-| Production Domain | https://andremauricedavis.com (Hostinger — CNAME to GitHub Pages) |
+| Production Domain | https://andremauricedavis.com (DNS A records set to GitHub IPs; propagation in progress) |
 | Supabase Project Name | andredavisme's Project |
 | Supabase Project ID | `hhyhulqngdkwsxhymmcd` |
 | Supabase Region | us-west-2 |
@@ -58,6 +58,45 @@ Rules every agent must follow throughout a session, in addition to reading this 
 - ❌ Do not trigger user troubleshooting based on stale file content alone — check the commit log first
 
 > **Why this exists:** On 2026-06-02 (Session 004), a manual upload of `design-test.html` (534KB) landed successfully but the API returned stale placeholder content for ~2 minutes after the commit was confirmed. The agent incorrectly initiated a troubleshooting sequence that required user involvement to resolve. This rule prevents that pattern.
+
+### GitHub Pages URL Testing Limitations
+
+**Do not use `https://andredavisme.github.io/andremauricedavis.com/` as the primary test URL for auth flows.** The GitHub Pages origin (`andredavisme.github.io`) is different from the Supabase auth session origin (`andremauricedavis.com`). Sessions established via the auth portal are stored under the `andremauricedavis.com` origin and will not be found when accessed from the GitHub Pages URL — triggering false auth redirect loops. Always test auth end-to-end from `https://andremauricedavis.com/` once DNS has propagated.
+
+---
+
+## Platform Architecture
+
+### Page Hierarchy
+
+```
+andremauricedavis.com/           ← authenticated landing page (index.html)
+├── /feed.html                   ← Feed Aggregator project
+│   └── /thread.html             ← Discussion threads (linked from feed cards)
+├── /admin.html                  ← Feed Aggregator admin (linked from feed.html — admin role only)
+└── /community-ledger.html       ← Community Ledger project (coming soon)
+```
+
+### Auth Flow
+
+1. User visits any protected page
+2. `requireAuth()` in `amd-auth.js` checks for active Supabase session
+3. If no session → redirect to `https://auth.andremauricedavis.com/?return=<current-url>`
+4. Google OAuth completes → portal returns user to `<current-url>`
+5. Session stored under `andremauricedavis.com` origin — available across all pages on that domain
+
+### Project Registry
+
+Projects displayed on `index.html` are driven by the `amd_projects` Supabase table — **no code change needed to add a new project, only a DB INSERT.** Admin manages project rows; `index.html` queries on every load.
+
+| Column | Purpose |
+|---|---|
+| `title` | Card heading |
+| `description` | Card subtitle |
+| `url` | Link target (e.g. `/feed.html`) |
+| `emoji` | Card icon |
+| `status` | `live`, `coming-soon`, or `archived` |
+| `display_order` | Card sort order |
 
 ---
 
@@ -315,19 +354,15 @@ A credential mismatch was introduced in a prior session: `amd-auth.js` and `admi
 
 - [ ] **Gap 5** — Enable Google OAuth on Supabase project `hhyhulqngdkwsxhymmcd` (manual — user action required, instructions above)
 - [ ] **Gap 6** — Import and publish first post via `admin.html` to verify full feed pipeline end-to-end (requires gap 5 complete)
-- [ ] **Gap 7** — Verify `thread.html` end-to-end: click Discuss on a feed card → thread loads → user can submit a reply → reply appears in Steward pending queue → admin approves → reply visible on thread
+- [ ] **Gap 7** — Verify `thread.html` end-to-end
 - [ ] Configure GitHub Pages custom domain (CNAME file → Hostinger DNS update)
-- [ ] Decide on content source priority order (API vs RSS vs programmatic vs manual) per platform
-- [ ] `amd_users` provisioning — confirm that a new Google OAuth login auto-creates a row in `amd_users` (or add a trigger/edge function to do so)
+- [ ] `amd_users` provisioning — confirm auto-create on first login
 
 #### Relevant Links
 
 - Gap 3 fix commit: https://github.com/andredavisme/andremauricedavis.com/commit/9bc770857c6ec11e8056fe71c6500a2bc8787307
 - Gap 4 fix commit: https://github.com/andredavisme/andremauricedavis.com/commit/96d3baabf82296a079e2fb99c0f89bece52237d8
 - Supabase Auth Providers: https://supabase.com/dashboard/project/hhyhulqngdkwsxhymmcd/auth/providers
-- feed.html: https://github.com/andredavisme/andremauricedavis.com/blob/main/feed.html
-- js/amd-feed.js: https://github.com/andredavisme/andremauricedavis.com/blob/main/js/amd-feed.js
-- admin.html: https://github.com/andredavisme/andremauricedavis.com/blob/main/admin.html
 
 ---
 
@@ -351,7 +386,6 @@ Google OAuth on `andremauricedavis.com` was redirecting to another property in t
 - **Shared Supabase project:** Confirmed that both `andremauricedavis.com` and `personal-ledger-public-display` use the same Supabase project `hhyhulqngdkwsxhymmcd`.
 - **Session storage strategy:** Removed custom `storageKey` usage from `andremauricedavis.com`. All AMD properties should use the Supabase default auth storage key so the portal and properties share one session model.
 - **Legacy local login page:** `login.html` in `andremauricedavis.com` is retained only as a redirect shim to the auth portal for backward compatibility.
-- **Manual infra completed by user during session:** Hostinger DNS for `auth.andremauricedavis.com`, GitHub Pages enablement for `amd-auth`, Supabase Site URL / redirect allowlist updates, and Google Cloud Console redirect updates were all completed.
 
 #### Tasks Completed
 
@@ -368,30 +402,85 @@ Google OAuth on `andremauricedavis.com` was redirecting to another property in t
 
 | Commit | Repo | Purpose |
 |---|---|---|
-| [`363daff`](https://github.com/andredavisme/amd-auth/commit/363daff237cf5eb442169ec37717bff182636330) | `amd-auth` | Initial auth portal — AMD Ember design, Google + email/password, `?return=` handling |
-| [`24bf6d3`](https://github.com/andredavisme/andremauricedavis.com/commit/24bf6d3f96705d3ac3a1b5cdfc543b7cf985b0ca) | `andremauricedavis.com` | Replace local OAuth with `auth.andremauricedavis.com` portal redirect |
+| [`363daff`](https://github.com/andredavisme/amd-auth/commit/363daff237cf5eb442169ec37717bff182636330) | `amd-auth` | Initial auth portal |
+| [`24bf6d3`](https://github.com/andredavisme/andremauricedavis.com/commit/24bf6d3f96705d3ac3a1b5cdfc543b7cf985b0ca) | `andremauricedavis.com` | Replace local OAuth with portal redirect |
 | [`2b67a73`](https://github.com/andredavisme/personal-ledger-public-display/commit/2b67a73d2d9374e6207a9584df46e74e2efd8adf) | `personal-ledger-public-display` | Replace local auth modal with portal redirect |
-| [`2e7f572`](https://github.com/andredavisme/andremauricedavis.com/commit/2e7f572931e2e502ef3f810728076c8f2f94d37b) | `andremauricedavis.com` | Convert `login.html` to instant redirect shim |
+| [`2e7f572`](https://github.com/andredavisme/andremauricedavis.com/commit/2e7f572931e2e502ef3f810728076c8f2f94d37b) | `andremauricedavis.com` | Convert `login.html` to redirect shim |
 
 #### Tasks Left Open (carried to Session 007)
 
-- [ ] **Gap 6** — Import and publish first post via `admin.html` to verify the full feed pipeline end-to-end
-- [ ] **Gap 7** — Verify `thread.html` end-to-end: click Discuss on a feed card → thread loads → user can submit a reply → reply appears in Steward pending queue → admin approves → reply visible on thread
-- [ ] **Unified auth testing** — Test the full redirect flow end-to-end after DNS propagation: AMD site → auth portal → return; ledger → auth portal → return
-- [ ] **Portal hardening** — Confirm allowlist entries are complete for every current property and trim any temporary localhost/testing entries later
-- [ ] Decide on content source priority order (API vs RSS vs programmatic vs manual) per platform
-- [ ] `amd_users` provisioning — confirm that first login through the portal auto-creates a row in `amd_users` on protected AMD pages and decide whether that logic belongs in app code, trigger, or edge function
+- [ ] **Gap 6** — Import and publish first post via `admin.html`
+- [ ] **Gap 7** — Verify `thread.html` end-to-end
+- [ ] **Unified auth testing** — Test full redirect flow after DNS propagation
+- [ ] `amd_users` provisioning — confirm auto-create on first login
+- [ ] Decide on content source priority order
 
 #### Relevant Links
 
 - Auth Portal Repo: https://github.com/andredavisme/amd-auth
 - Auth Portal Domain: https://auth.andremauricedavis.com
-- Auth Portal initial commit: https://github.com/andredavisme/amd-auth/commit/363daff237cf5eb442169ec37717bff182636330
-- AMD portal redirect commit: https://github.com/andredavisme/andremauricedavis.com/commit/24bf6d3f96705d3ac3a1b5cdfc543b7cf985b0ca
-- Ledger portal redirect commit: https://github.com/andredavisme/personal-ledger-public-display/commit/2b67a73d2d9374e6207a9584df46e74e2efd8adf
-- login.html redirect shim commit: https://github.com/andredavisme/andremauricedavis.com/commit/2e7f572931e2e502ef3f810728076c8f2f94d37b
 - Supabase Auth URL Configuration: https://supabase.com/dashboard/project/hhyhulqngdkwsxhymmcd/auth/url-configuration
-- Supabase Auth Providers: https://supabase.com/dashboard/project/hhyhulqngdkwsxhymmcd/auth/providers
+
+---
+
+### Session 007 — DNS Migration + Project Landing Page + amd_projects Table
+
+**Date:** 2026-06-04
+**Session opened:** 10:56 AM EDT
+**Session closed:** 11:42 AM EDT
+**Active working time:** ~46 minutes
+**Actual elapsed time:** ~46 minutes
+
+#### Problem Statement
+
+The `andremauricedavis.com` domain was still serving Hostinger's default page. DNS needed to be migrated to GitHub Pages so the repo becomes the production host. Additionally, the auth redirect flow had a `sessionStorage` bug causing users to land on the wrong page after OAuth, and the platform lacked an authenticated landing page to serve as the hub between projects.
+
+#### Decisions Made
+
+- **DNS migration:** `andremauricedavis.com` A records updated in Hostinger to GitHub Pages IPs (`185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`). CNAME file added to repo. TTL is 14400s — propagation expected within 4 hours of session close.
+- **`safeReturn` fix:** The auth portal was losing the `?return=` value after OAuth because the query string is stripped on redirect. Fixed using `sessionStorage`: portal saves `amd_return` before OAuth, reads it back after callback, then clears it.
+- **Platform architecture clarified:** `index.html` is the authenticated hub. Project-specific pages (`feed.html`, `community-ledger.html`) are reached from there. Admin panels are reached from the project landing pages, not from `index.html`.
+- **Project registry via Supabase:** Projects displayed on `index.html` are driven by `amd_projects` table — not hardcoded HTML. Admin adds a row to add a project. No deploy needed.
+- **Role clarification:** `amd_users.role` values are `'user'` and `'admin'` (not `'member'`). Bug fixed in `amd-auth.js` this session.
+- **GitHub Pages URL testing limitation documented:** The GitHub Pages URL (`andredavisme.github.io/andremauricedavis.com`) cannot be used to test auth flows reliably because the Supabase session origin is `andremauricedavis.com`. Sessions are not shared across origins. Added to Agent Protocol.
+
+#### Tasks Completed
+
+- [x] Added `CNAME` file to `andremauricedavis.com` repo for custom domain
+- [x] User updated Hostinger DNS A records to GitHub Pages IPs (manual — confirmed by user)
+- [x] Fixed `role` bug in `amd-auth.js` — `'member'` corrected to `'user'`
+- [x] Fixed `safeReturn` sessionStorage bug in `amd-auth` portal — `?return=` value now survives OAuth redirect via `sessionStorage`
+- [x] Created `amd_projects` Supabase table — migration `create_amd_projects` applied
+- [x] Seeded 2 rows: The Feed (`/feed.html`, live) and Community Ledger (`/community-ledger.html`, coming-soon)
+- [x] Rebuilt `index.html` — authenticated landing page querying `amd_projects` from Supabase, AMD Ember design, dark mode, sign out, role-aware nav
+- [x] Added GitHub Pages URL testing limitation to Agent Protocol in this document
+
+#### Commits
+
+| Commit | Repo | Purpose |
+|---|---|---|
+| [`f6d4ef5`](https://github.com/andredavisme/amd-auth/commit/f6d4ef5657c5b3cf6c28284447cdf7f5d11a9b7d) | `amd-auth` | Fix `safeReturn` — sessionStorage approach |
+| [`f1d75d6`](https://github.com/andredavisme/andremauricedavis.com/commit/f1d75d6d18c70847d49a9caabb0b965e2ffd13ec) | `andremauricedavis.com` | Rebuild `index.html` as authenticated landing page |
+
+#### Tasks Left Open (carry to Session 008)
+
+- [ ] **DNS verification** — Test `https://andremauricedavis.com/` after propagation (flush local DNS first: `ipconfig /flushdns` on Windows, `sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder` on Mac)
+- [ ] **End-to-end auth test** — Visit `andremauricedavis.com` → Google sign-in → land on `index.html` project cards → click The Feed → `feed.html` loads with posts
+- [ ] **Update `feed.html` auth guard** — On session expiry, redirect to `/` (not to the auth portal directly)
+- [ ] **Add admin link to `feed.html` nav** — Visible only when `role = 'admin'`
+- [ ] **Create `community-ledger.html`** — Placeholder page in AMD Ember design
+- [ ] **Add `amd_projects` management to `admin.html`** — Admin can add/edit/reorder projects without touching the DB directly
+- [ ] **Gap 6** — Import and publish first post via `admin.html`
+- [ ] **Gap 7** — Verify `thread.html` end-to-end
+- [ ] **`amd_users` provisioning** — Confirm auto-create on first login or add trigger/edge function
+- [ ] Decide on content source priority order (API vs RSS vs programmatic vs manual)
+
+#### Relevant Links
+
+- `index.html` commit: https://github.com/andredavisme/andremauricedavis.com/commit/f1d75d6d18c70847d49a9caabb0b965e2ffd13ec
+- `amd-auth` safeReturn fix: https://github.com/andredavisme/amd-auth/commit/f6d4ef5657c5b3cf6c28284447cdf7f5d11a9b7d
+- Supabase Migrations: https://supabase.com/dashboard/project/hhyhulqngdkwsxhymmcd/database/migrations
+- Hostinger DNS (manual access): https://hpanel.hostinger.com
 
 ---
 
@@ -405,8 +494,9 @@ Google OAuth on `andremauricedavis.com` was redirecting to another property in t
 | 004 | 2026-06-02 | 4:03 PM EDT | ~4:15 PM EDT | ~12 min | ~12 min |
 | 005 | 2026-06-03 | 2:09 PM EDT | 2:29 PM EDT | ~20 min | ~20 min |
 | 006 | 2026-06-04 | 8:20 AM EDT | 9:27 AM EDT | ~67 min | ~67 min |
-| **Total** | | | | **~149 min** | |
+| 007 | 2026-06-04 | 10:56 AM EDT | 11:42 AM EDT | ~46 min | ~46 min |
+| **Total** | | | | **~195 min** | |
 
 ---
 
-*Last updated: 2026-06-04 by agent — Session 006 closed.*
+*Last updated: 2026-06-04 by agent — Session 007 closed.*
