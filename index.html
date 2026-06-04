@@ -1,28 +1,277 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>André Maurice Davis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
-    body { margin: 0; font-family: sans-serif; background: #f7f6f2; color: #28251d; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 2rem; }
-    h1 { font-size: clamp(2rem, 5vw, 4rem); margin-bottom: 0.5rem; }
-    p { color: #7a7974; font-size: 1.125rem; max-width: 480px; }
-    .badge { display: inline-block; margin-top: 2rem; padding: 0.5rem 1.25rem; background: #c97b12; color: #fff; border-radius: 9999px; font-size: 0.875rem; text-decoration: none; }
+    :root {
+      --color-primary:         #c97b12;
+      --color-primary-hover:   #a8660f;
+      --color-orange:          #d95e1a;
+      --color-bg:              #f8f5f0;
+      --color-surface:         #faf7f3;
+      --color-surface-mid:     #f2ede5;
+      --color-surface-raised:  #ede8df;
+      --color-border:          #d9d0c0;
+      --color-border-light:    #e8e2d8;
+      --color-text:            #1f1a13;
+      --color-text-muted:      #5a5040;
+      --color-text-faint:      #8a7f6e;
+      --font-display:          'Instrument Serif', Georgia, serif;
+      --font-body:             'Work Sans', 'Helvetica Neue', sans-serif;
+      --radius:    10px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.07);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.09);
+    }
+    [data-theme="dark"] {
+      --color-bg:             #1a1610;
+      --color-surface:        #211d15;
+      --color-surface-mid:    #2a2419;
+      --color-surface-raised: #332d1f;
+      --color-border:         #3d3525;
+      --color-border-light:   #2e2820;
+      --color-text:           #f0ebe0;
+      --color-text-muted:     #b5a98a;
+      --color-text-faint:     #7a6f58;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-body);
+      background: var(--color-bg);
+      color: var(--color-text);
+      min-height: 100vh;
+    }
+
+    /* Nav */
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+      padding: 0 1.5rem; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-brand {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      color: var(--color-text);
+      text-decoration: none;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .nav-logo {
+      width: 32px; height: 32px;
+      background: var(--color-primary);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-family: var(--font-display); font-size: 1.1rem;
+    }
+    .nav-actions { display: flex; align-items: center; gap: 0.75rem; }
+    .nav-user {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.875rem; color: var(--color-text-muted);
+    }
+    .nav-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--color-surface-raised); object-fit: cover;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.45rem 0.9rem; border-radius: var(--radius);
+      font-family: var(--font-body); font-size: 0.875rem; font-weight: 500;
+      cursor: pointer; border: none; text-decoration: none;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .btn-ghost {
+      background: transparent; color: var(--color-text-muted);
+      border: 1px solid var(--color-border);
+    }
+    .btn-ghost:hover { background: var(--color-surface-mid); }
+    .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.78rem; }
+    .theme-toggle {
+      background: none; border: 1px solid var(--color-border);
+      border-radius: var(--radius); width: 34px; height: 34px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; color: var(--color-text-muted); transition: background 0.15s;
+    }
+    .theme-toggle:hover { background: var(--color-surface-mid); }
+
+    /* Hero */
+    .hero {
+      max-width: 760px; margin: 0 auto;
+      padding: 4rem 1.5rem 2rem;
+      text-align: center;
+    }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 1.75rem + 1.5vw, 2.8rem);
+      color: var(--color-text);
+      margin-bottom: 0.75rem;
+    }
+    .hero-sub {
+      font-size: 1rem; color: var(--color-text-muted); line-height: 1.6;
+    }
+
+    /* Project grid */
+    .projects {
+      max-width: 960px; margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .project-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-light);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 1.5rem;
+      display: flex; flex-direction: column; gap: 0.75rem;
+      text-decoration: none; color: inherit;
+      transition: box-shadow 0.2s, transform 0.15s;
+      position: relative;
+    }
+    .project-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    .project-card.coming-soon {
+      opacity: 0.65; cursor: default; pointer-events: none;
+    }
+    .project-emoji { font-size: 2rem; line-height: 1; }
+    .project-title {
+      font-family: var(--font-display);
+      font-size: 1.3rem; color: var(--color-text);
+    }
+    .project-desc {
+      font-size: 0.9rem; color: var(--color-text-muted); line-height: 1.6; flex: 1;
+    }
+    .project-badge {
+      display: inline-flex; align-items: center;
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.05em;
+      text-transform: uppercase; padding: 0.2rem 0.55rem;
+      border-radius: 99px; align-self: flex-start;
+    }
+    .badge-live    { background: #dcfce7; color: #166534; }
+    .badge-coming  { background: var(--color-surface-mid); color: var(--color-text-faint); }
+    .badge-archived { background: #fef3c7; color: #92400e; }
+
+    /* Auth gate */
+    #auth-gate {
+      position: fixed; inset: 0;
+      background: var(--color-bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 1rem;
+      z-index: 999;
+    }
+    #auth-gate .gate-logo {
+      width: 56px; height: 56px;
+      background: var(--color-primary); border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-family: var(--font-display); font-size: 1.8rem;
+    }
+    #auth-gate p { color: var(--color-text-muted); font-size: 0.875rem; }
   </style>
 </head>
 <body>
-  <h1>André Maurice Davis</h1>
-  <p>Platform coming soon — consolidating community, content, and conversation in one place.</p>
-  <a class="badge" href="https://github.com/andredavisme/andremauricedavis.com" target="_blank" rel="noopener noreferrer">Follow the build →</a>
 
-  <script>
-    // OAuth callback handler: Supabase appends #access_token=... after redirect.
-    // If detected here on the root, forward to feed.html preserving the hash.
-    if (window.location.hash && window.location.hash.includes('access_token')) {
-      const base = window.location.pathname.replace(/\/$/, '');
-      window.location.replace(base + '/feed.html' + window.location.hash);
-    }
+  <div id="auth-gate">
+    <div class="gate-logo">A</div>
+    <p>Checking your session…</p>
+  </div>
+
+  <nav class="nav">
+    <a class="nav-brand" href="/">
+      <div class="nav-logo">A</div>
+      André Maurice Davis
+    </a>
+    <div class="nav-actions">
+      <div class="nav-user" id="nav-user"></div>
+      <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode">🌙</button>
+      <button class="btn btn-ghost btn-sm" id="sign-out-btn">Sign out</button>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <h1 class="hero-title">Welcome</h1>
+    <p class="hero-sub">Select a project below to get started.</p>
+  </div>
+
+  <div class="projects" id="projects-grid">
+    <!-- populated by JS -->
+  </div>
+
+  <script type="module">
+    import { requireAuth, signOut, supabase } from './js/amd-auth.js';
+
+    (async () => {
+      const user = await requireAuth();
+      if (!user) return;
+
+      document.getElementById('auth-gate').style.display = 'none';
+
+      // Nav user
+      const meta = window.amdSession?.user?.user_metadata;
+      if (meta) {
+        document.getElementById('nav-user').innerHTML = `
+          ${meta.avatar_url ? `<img class="nav-avatar" src="${meta.avatar_url}" alt="">` : ''}
+          <span>${meta.full_name ?? 'Member'}</span>
+        `;
+      }
+
+      document.getElementById('sign-out-btn').addEventListener('click', signOut);
+
+      // Theme
+      const html   = document.documentElement;
+      const toggle = document.getElementById('theme-toggle');
+      const saved  = localStorage.getItem('amd-theme') ?? 'light';
+      html.setAttribute('data-theme', saved);
+      toggle.textContent = saved === 'dark' ? '☀️' : '🌙';
+      toggle.addEventListener('click', () => {
+        const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('amd-theme', next);
+        toggle.textContent = next === 'dark' ? '☀️' : '🌙';
+      });
+
+      // Load projects from Supabase
+      const { data: projects, error } = await supabase
+        .from('amd_projects')
+        .select('*')
+        .neq('status', 'archived')
+        .order('display_order', { ascending: true });
+
+      const grid = document.getElementById('projects-grid');
+
+      if (error || !projects?.length) {
+        grid.innerHTML = '<p style="color:var(--color-text-muted)">No projects available.</p>';
+        return;
+      }
+
+      const badgeMap = {
+        'live':        ['badge-live',     'Live'],
+        'coming-soon': ['badge-coming',   'Coming Soon'],
+        'archived':    ['badge-archived', 'Archived'],
+      };
+
+      projects.forEach(p => {
+        const [badgeClass, badgeLabel] = badgeMap[p.status] ?? ['badge-coming', p.status];
+        const card = document.createElement('a');
+        card.className = `project-card${p.status !== 'live' ? ' coming-soon' : ''}`;
+        card.href = p.url;
+        card.innerHTML = `
+          <div class="project-emoji">${p.emoji ?? '📌'}</div>
+          <div class="project-title">${p.title}</div>
+          <div class="project-desc">${p.description ?? ''}</div>
+          <span class="project-badge ${badgeClass}">${badgeLabel}</span>
+        `;
+        grid.appendChild(card);
+      });
+    })();
   </script>
+
 </body>
 </html>
