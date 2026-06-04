@@ -1,7 +1,7 @@
 /**
  * amd-auth.js
- * Google OAuth gate shared across all AMD platform pages.
- * Redirects unauthenticated users to login.html.
+ * Auth guard for all AMD platform pages.
+ * Unauthenticated users are redirected to auth.andremauricedavis.com with ?return=<current-url>.
  * Exposes: window.amdSession (Supabase session), window.amdUser (amd_users row)
  */
 
@@ -10,36 +10,29 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL = 'https://hhyhulqngdkwsxhymmcd.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_haKvwV0M7KMj4Qz69M6WGg_KmIfU-aI';
 
-// BASE_PATH handles the GitHub Pages subpath.
-// GitHub Pages: andredavisme.github.io/andremauricedavis.com  → '/andremauricedavis.com'
-// Production:   andremauricedavis.com                         → ''
-const BASE_PATH = window.location.hostname === 'andredavisme.github.io'
-  ? '/andremauricedavis.com'
-  : '';
+// No storageKey override — use Supabase default so all AMD properties share the session.
+export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// REDIRECT_URL points to site root so index.html catches the OAuth callback hash
-// and forwards to feed.html. This avoids Supabase allowlist exact-match issues
-// with deep paths like /feed.html.
-const REDIRECT_URL = window.location.hostname === 'andredavisme.github.io'
-  ? 'https://andredavisme.github.io/andremauricedavis.com/'
-  : window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? window.location.origin + '/'
-  : 'https://andremauricedavis.com/';
+const AUTH_PORTAL = 'https://auth.andremauricedavis.com/';
 
-// storageKey namespaces auth tokens away from other projects on the same Supabase instance.
-export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: { storageKey: 'amd-platform-auth' },
-});
+/**
+ * Redirect unauthenticated users to the AMD auth portal.
+ * Passes the current page URL as ?return= so the portal sends them back.
+ */
+function redirectToPortal() {
+  const returnUrl = window.location.href;
+  window.location.replace(AUTH_PORTAL + '?return=' + encodeURIComponent(returnUrl));
+}
 
 /**
  * Call on every protected page.
- * Returns the amd_users row for the logged-in user, or redirects to login.
+ * Returns the amd_users row for the logged-in user, or redirects to portal.
  */
 export async function requireAuth() {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
-    window.location.href = BASE_PATH + '/login.html';
+    redirectToPortal();
     return null;
   }
 
@@ -71,21 +64,9 @@ export async function requireAuth() {
 }
 
 /**
- * Sign in with Google. Call from login.html.
- */
-export async function signInWithGoogle() {
-  await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: REDIRECT_URL,
-    },
-  });
-}
-
-/**
- * Sign out and redirect to login.
+ * Sign out and return to the auth portal.
  */
 export async function signOut() {
   await supabase.auth.signOut();
-  window.location.href = BASE_PATH + '/login.html';
+  window.location.replace(AUTH_PORTAL);
 }
