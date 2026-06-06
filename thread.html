@@ -4,13 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Discussion — André Maurice Davis</title>
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-
   <style>
-    /* ── AMD Ember Design Tokens ──────────────────────────────────── */
     :root {
       --color-primary:         #c97b12;
       --color-primary-hover:   #a8660f;
@@ -40,7 +37,6 @@
       --shadow-md: 0 4px 12px rgba(0,0,0,0.09);
       --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
     }
-
     [data-theme="dark"] {
       --color-bg:             #1a1610;
       --color-surface:        #211d15;
@@ -52,325 +48,98 @@
       --color-text-muted:     #b5a98a;
       --color-text-faint:     #7a6f58;
     }
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: var(--font-body);
-      font-size: var(--text-base);
-      color: var(--color-text);
-      background: var(--color-bg);
-      min-height: 100vh;
-    }
-
+    body { font-family: var(--font-body); font-size: var(--text-base); color: var(--color-text); background: var(--color-bg); min-height: 100vh; }
     a { color: var(--color-primary); }
 
-    /* ── Nav ───────────────────────────────────────────────────── */
+    /* Nav */
     .nav {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: var(--color-surface);
-      border-bottom: 1px solid var(--color-border);
-      padding: 0 1.5rem;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
+      position: sticky; top: 0; z-index: 100;
+      background: var(--color-surface); border-bottom: 1px solid var(--color-border);
+      padding: 0 1.5rem; height: 60px;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
     }
-    .nav-brand {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      text-decoration: none;
-      font-family: var(--font-display);
-      font-size: var(--text-lg);
-      color: var(--color-text);
-    }
-    .nav-logo {
-      width: 32px; height: 32px;
-      background: var(--color-primary);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      color: #fff;
-      font-family: var(--font-display);
-      font-size: 1.1rem;
-    }
+    .nav-brand { display: flex; align-items: center; gap: 0.5rem; text-decoration: none; font-family: var(--font-display); font-size: var(--text-lg); color: var(--color-text); }
+    .nav-logo { width: 32px; height: 32px; background: var(--color-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-family: var(--font-display); font-size: 1.1rem; }
     .nav-actions { display: flex; align-items: center; gap: 0.75rem; }
-    .nav-user {
-      display: flex; align-items: center; gap: 0.5rem;
-      font-size: var(--text-sm); color: var(--color-text-muted);
-    }
-    .nav-avatar {
-      width: 30px; height: 30px;
-      border-radius: 50%;
-      background: var(--color-surface-raised);
-      object-fit: cover;
-    }
-    .btn {
-      display: inline-flex; align-items: center; gap: 0.4rem;
-      padding: 0.45rem 0.9rem;
-      border-radius: var(--radius);
-      font-family: var(--font-body);
-      font-size: var(--text-sm); font-weight: 500;
-      cursor: pointer; border: none;
-      transition: background 0.15s, opacity 0.15s;
-      text-decoration: none;
-    }
+    .nav-user { display: flex; align-items: center; gap: 0.5rem; font-size: var(--text-sm); color: var(--color-text-muted); }
+    .nav-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--color-surface-raised); object-fit: cover; }
+    .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.9rem; border-radius: var(--radius); font-family: var(--font-body); font-size: var(--text-sm); font-weight: 500; cursor: pointer; border: none; transition: background 0.15s, opacity 0.15s; text-decoration: none; }
     .btn-primary { background: var(--color-primary); color: #fff; }
     .btn-primary:hover { background: var(--color-primary-hover); }
-    .btn-ghost {
-      background: transparent;
-      color: var(--color-text-muted);
-      border: 1px solid var(--color-border);
-    }
+    .btn-ghost { background: transparent; color: var(--color-text-muted); border: 1px solid var(--color-border); }
     .btn-ghost:hover { background: var(--color-surface-mid); }
     .btn-sm { padding: 0.3rem 0.7rem; font-size: var(--text-xs); }
-    .theme-toggle {
-      background: none;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius);
-      width: 34px; height: 34px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1rem; color: var(--color-text-muted);
-      transition: background 0.15s;
-    }
+    .theme-toggle { background: none; border: 1px solid var(--color-border); border-radius: var(--radius); width: 34px; height: 34px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--color-text-muted); transition: background 0.15s; }
     .theme-toggle:hover { background: var(--color-surface-mid); }
 
-    /* ── Page layout ───────────────────────────────────────────── */
-    .page-wrap {
-      max-width: 780px;
-      margin: 0 auto;
-      padding: 2rem 1.5rem 4rem;
-    }
-
-    /* ── Back link ─────────────────────────────────────────────── */
-    .back-link {
-      display: inline-flex; align-items: center; gap: 0.35rem;
-      font-size: var(--text-sm); color: var(--color-text-muted);
-      text-decoration: none; margin-bottom: 1.5rem;
-    }
+    /* Page layout */
+    .page-wrap { max-width: 780px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    .back-link { display: inline-flex; align-items: center; gap: 0.35rem; font-size: var(--text-sm); color: var(--color-text-muted); text-decoration: none; margin-bottom: 1.5rem; }
     .back-link:hover { color: var(--color-primary); }
 
-    /* ── Post card ──────────────────────────────────────────────── */
-    .post-card {
-      background: var(--color-surface);
-      border: 1px solid var(--color-border-light);
-      border-radius: var(--radius);
-      margin-bottom: 2rem;
-      box-shadow: var(--shadow-sm);
-      overflow: hidden;
-    }
-    .post-card-image {
-      width: 100%;
-      aspect-ratio: 16/9;
-      object-fit: cover;
-      display: block;
-      background: var(--color-surface-mid);
-    }
+    /* Post card */
+    .post-card { background: var(--color-surface); border: 1px solid var(--color-border-light); border-radius: var(--radius); margin-bottom: 2rem; box-shadow: var(--shadow-sm); overflow: hidden; }
+    .post-card-image { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: var(--color-surface-mid); }
     .post-card-inner { padding: 1.25rem 1.5rem; }
-    .post-card-meta {
-      display: flex; align-items: center; gap: 0.75rem;
-      margin-bottom: 0.75rem; flex-wrap: wrap;
-    }
-    .post-badge {
-      display: inline-flex; align-items: center; gap: 0.35rem;
-      font-size: var(--text-xs); font-weight: 600;
-      color: var(--badge-color, var(--color-primary));
-    }
-    .post-badge-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--badge-color, var(--color-primary));
-    }
+    .post-card-meta { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+    .post-badge { display: inline-flex; align-items: center; gap: 0.35rem; font-size: var(--text-xs); font-weight: 600; color: var(--badge-color, var(--color-primary)); }
+    .post-badge-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--badge-color, var(--color-primary)); }
     .post-card-time { font-size: var(--text-xs); color: var(--color-text-faint); }
-    .post-card-title {
-      font-family: var(--font-display);
-      font-size: var(--text-xl);
-      color: var(--color-text);
-      margin-bottom: 0.6rem;
-      line-height: 1.3;
-    }
-    .post-card-body {
-      font-size: var(--text-base);
-      color: var(--color-text-muted);
-      line-height: 1.7;
-      margin-bottom: 0.75rem;
-    }
+    .post-card-title { font-family: var(--font-display); font-size: var(--text-xl); color: var(--color-text); margin-bottom: 0.6rem; line-height: 1.3; }
+    .post-card-body { font-size: var(--text-base); color: var(--color-text-muted); line-height: 1.7; margin-bottom: 0.75rem; }
     .post-card-link { font-size: var(--text-sm); color: var(--color-text-faint); text-decoration: none; }
     .post-card-link:hover { color: var(--color-primary); }
 
-    /* ── Discussion header ─────────────────────────────────────── */
-    .thread-header {
-      display: flex; align-items: baseline;
-      justify-content: space-between;
-      margin-bottom: 1rem; gap: 1rem;
-    }
+    /* Discussion */
+    .thread-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1rem; gap: 1rem; }
     .thread-title { font-family: var(--font-display); font-size: var(--text-lg); color: var(--color-text); }
     .thread-count { font-size: var(--text-sm); color: var(--color-text-faint); white-space: nowrap; }
 
-    /* ── Reply composer ────────────────────────────────────────── */
-    .reply-composer {
-      background: var(--color-surface);
-      border: 1px solid var(--color-border-light);
-      border-radius: var(--radius);
-      padding: 1rem 1.25rem;
-      margin-bottom: 1.75rem;
-      box-shadow: var(--shadow-sm);
+    /* Sign-in prompt (replaces composer for guests) */
+    .signin-prompt {
+      background: var(--color-surface-mid); border: 1px solid var(--color-border-light);
+      border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.75rem;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+      font-size: var(--text-sm); color: var(--color-text-muted);
     }
-    .reply-composer label {
-      display: block;
-      font-size: var(--text-sm); font-weight: 500;
-      color: var(--color-text-muted); margin-bottom: 0.5rem;
-    }
-    .reply-composer textarea {
-      width: 100%; min-height: 90px;
-      padding: 0.65rem 0.85rem;
-      font-family: var(--font-body); font-size: var(--text-base);
-      color: var(--color-text); background: var(--color-bg);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius);
-      resize: vertical; transition: border-color 0.15s;
-      margin-bottom: 0.75rem;
-    }
+
+    /* Reply composer */
+    .reply-composer { background: var(--color-surface); border: 1px solid var(--color-border-light); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.75rem; box-shadow: var(--shadow-sm); }
+    .reply-composer label { display: block; font-size: var(--text-sm); font-weight: 500; color: var(--color-text-muted); margin-bottom: 0.5rem; }
+    .reply-composer textarea { width: 100%; min-height: 90px; padding: 0.65rem 0.85rem; font-family: var(--font-body); font-size: var(--text-base); color: var(--color-text); background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius); resize: vertical; transition: border-color 0.15s; margin-bottom: 0.75rem; }
     .reply-composer textarea:focus { outline: none; border-color: var(--color-primary); }
-    .reply-composer-footer {
-      display: flex; align-items: center;
-      justify-content: space-between; gap: 1rem; flex-wrap: wrap;
-    }
+    .reply-composer-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
     .reply-composer-note { font-size: var(--text-xs); color: var(--color-text-faint); }
-    .reply-success {
-      display: none;
-      font-size: var(--text-sm); color: var(--color-success); margin-top: 0.5rem;
-    }
+    .reply-success { display: none; font-size: var(--text-sm); color: var(--color-success); margin-top: 0.5rem; }
 
-    /* ── Reply list ──────────────────────────────────────────────── */
+    /* Reply list */
     #reply-list { display: flex; flex-direction: column; gap: 0.85rem; }
-
-    /* Top-level reply */
-    .reply-item {
-      background: var(--color-surface);
-      border: 1px solid var(--color-border-light);
-      border-radius: var(--radius);
-      padding: 1rem 1.25rem;
-      box-shadow: var(--shadow-sm);
-    }
-
-    /* Nested replies (children) */
-    .reply-children {
-      display: flex;
-      flex-direction: column;
-      gap: 0.65rem;
-      margin-top: 0.75rem;
-      padding-left: 1.25rem;
-      border-left: 2px solid var(--color-border-light);
-    }
-
-    .reply-child {
-      background: var(--color-surface-mid);
-      border: 1px solid var(--color-border-light);
-      border-radius: var(--radius);
-      padding: 0.75rem 1rem;
-    }
-
-    .reply-item-meta {
-      display: flex; align-items: center; gap: 0.65rem;
-      margin-bottom: 0.6rem; flex-wrap: wrap;
-    }
-    .reply-avatar {
-      width: 28px; height: 28px;
-      border-radius: 50%;
-      background: var(--color-surface-raised);
-      object-fit: cover; flex-shrink: 0;
-    }
-    .reply-avatar-placeholder {
-      width: 28px; height: 28px;
-      border-radius: 50%;
-      background: var(--color-surface-raised);
-      display: flex; align-items: center; justify-content: center;
-      font-size: var(--text-xs); color: var(--color-text-faint);
-      flex-shrink: 0;
-    }
+    .reply-item { background: var(--color-surface); border: 1px solid var(--color-border-light); border-radius: var(--radius); padding: 1rem 1.25rem; box-shadow: var(--shadow-sm); }
+    .reply-children { display: flex; flex-direction: column; gap: 0.65rem; margin-top: 0.75rem; padding-left: 1.25rem; border-left: 2px solid var(--color-border-light); }
+    .reply-child { background: var(--color-surface-mid); border: 1px solid var(--color-border-light); border-radius: var(--radius); padding: 0.75rem 1rem; }
+    .reply-item-meta { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.6rem; flex-wrap: wrap; }
+    .reply-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--color-surface-raised); object-fit: cover; flex-shrink: 0; }
+    .reply-avatar-placeholder { width: 28px; height: 28px; border-radius: 50%; background: var(--color-surface-raised); display: flex; align-items: center; justify-content: center; font-size: var(--text-xs); color: var(--color-text-faint); flex-shrink: 0; }
     .reply-name { font-size: var(--text-sm); font-weight: 500; color: var(--color-text); }
     .reply-time { font-size: var(--text-xs); color: var(--color-text-faint); margin-left: auto; }
     .reply-body { font-size: var(--text-base); color: var(--color-text-muted); line-height: 1.65; }
-
-    /* Reply-to button on top-level replies */
-    .reply-to-btn {
-      margin-top: 0.65rem;
-      background: none;
-      border: none;
-      font-family: var(--font-body);
-      font-size: var(--text-xs);
-      color: var(--color-text-faint);
-      cursor: pointer;
-      padding: 0;
-    }
+    .reply-to-btn { margin-top: 0.65rem; background: none; border: none; font-family: var(--font-body); font-size: var(--text-xs); color: var(--color-text-faint); cursor: pointer; padding: 0; }
     .reply-to-btn:hover { color: var(--color-primary); }
-
-    /* Inline reply sub-composer */
-    .reply-sub-composer {
-      display: none;
-      margin-top: 0.75rem;
-      padding-top: 0.75rem;
-      border-top: 1px solid var(--color-border-light);
-    }
+    .reply-sub-composer { display: none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--color-border-light); }
     .reply-sub-composer.open { display: block; }
-    .reply-sub-composer textarea {
-      width: 100%; min-height: 70px;
-      padding: 0.55rem 0.75rem;
-      font-family: var(--font-body); font-size: var(--text-sm);
-      color: var(--color-text); background: var(--color-bg);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius);
-      resize: vertical; transition: border-color 0.15s;
-      margin-bottom: 0.5rem;
-    }
+    .reply-sub-composer textarea { width: 100%; min-height: 70px; padding: 0.55rem 0.75rem; font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text); background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius); resize: vertical; transition: border-color 0.15s; margin-bottom: 0.5rem; }
     .reply-sub-composer textarea:focus { outline: none; border-color: var(--color-primary); }
     .reply-sub-composer-actions { display: flex; gap: 0.5rem; align-items: center; }
+    .reply-empty { text-align: center; padding: 3rem 1rem; color: var(--color-text-faint); font-size: var(--text-md); }
 
-    .reply-empty {
-      text-align: center; padding: 3rem 1rem;
-      color: var(--color-text-faint); font-size: var(--text-md);
-    }
-
-    /* ── Spinner ─────────────────────────────────────────────────── */
+    /* Spinner */
     .spinner-wrap { display: flex; justify-content: center; padding: 2rem; }
-    .spinner {
-      width: 28px; height: 28px;
-      border: 3px solid var(--color-border);
-      border-top-color: var(--color-primary);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
+    .spinner { width: 28px; height: 28px; border: 3px solid var(--color-border); border-top-color: var(--color-primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Auth gate ─────────────────────────────────────────────── */
-    #auth-gate {
-      position: fixed; inset: 0;
-      background: var(--color-bg);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 1rem; z-index: 999;
-    }
-    #auth-gate .gate-logo {
-      width: 56px; height: 56px;
-      background: var(--color-primary);
-      border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      color: #fff; font-family: var(--font-display); font-size: 1.8rem;
-    }
-    #auth-gate p { color: var(--color-text-muted); font-size: var(--text-sm); }
   </style>
 </head>
 <body>
-
-  <div id="auth-gate">
-    <div class="gate-logo">A</div>
-    <p>Checking your session…</p>
-  </div>
 
   <nav class="nav">
     <a class="nav-brand" href="./feed.html">
@@ -379,13 +148,14 @@
     </a>
     <div class="nav-actions">
       <div class="nav-user" id="nav-user"></div>
+      <a class="btn btn-ghost btn-sm" id="admin-link" href="./admin.html" style="display:none">Admin</a>
       <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode">🌙</button>
-      <button class="btn btn-ghost btn-sm" id="sign-out-btn">Sign out</button>
+      <div id="nav-auth"></div>
     </div>
   </nav>
 
   <div class="page-wrap">
-    <a class="back-link" id="back-link" href="./feed.html">← Back to feed</a>
+    <a class="back-link" href="./feed.html">← Back to feed</a>
     <div id="post-card-wrap"></div>
 
     <div class="thread-header">
@@ -393,24 +163,13 @@
       <span class="thread-count" id="reply-count"></span>
     </div>
 
-    <div class="reply-composer">
-      <label for="reply-input">Add to the conversation</label>
-      <textarea id="reply-input" placeholder="Share your thoughts…" maxlength="2000"></textarea>
-      <div class="reply-composer-footer">
-        <span class="reply-composer-note">Replies are reviewed before appearing publicly.</span>
-        <button class="btn btn-primary" id="reply-submit">Submit reply</button>
-      </div>
-      <p class="reply-success" id="reply-success">✓ Reply submitted — it will appear once approved.</p>
-    </div>
+    <div id="composer-wrap"></div>
 
     <div id="reply-list"><div class="spinner-wrap"><div class="spinner"></div></div></div>
   </div>
 
   <script type="module">
-    import { requireAuth, signOut, supabase } from './js/amd-auth.js';
-
-    const BASE_PATH = window.location.hostname === 'andredavisme.github.io'
-      ? '/andremauricedavis.com' : '';
+    import { optionalAuth, signOut, promptSignIn, supabase } from './js/amd-auth.js';
 
     const PLATFORM_CONFIG = {
       facebook: { label: 'Facebook', color: '#1877F2', emoji: '📘' },
@@ -438,9 +197,7 @@
       const av   = u?.avatar_url;
       return `
         <div class="reply-item-meta">
-          ${av
-            ? `<img class="reply-avatar" src="${av}" alt="">`
-            : `<div class="reply-avatar-placeholder">👤</div>`}
+          ${av ? `<img class="reply-avatar" src="${av}" alt="">` : `<div class="reply-avatar-placeholder">👤</div>`}
           <span class="reply-name">${name}</span>
           <time class="reply-time">${relativeTime(r.created_at)}</time>
         </div>
@@ -449,20 +206,36 @@
     }
 
     (async () => {
-      const user = await requireAuth();
-      if (!user) return;
-      document.getElementById('auth-gate').style.display = 'none';
+      const user = await optionalAuth();
+      const session  = window.amdSession;
+      const amdUser  = window.amdUser;
+      const meta     = session?.user?.user_metadata;
 
-      const meta = window.amdSession?.user?.user_metadata;
-      if (meta) {
+      // Nav user
+      if (session && meta) {
         document.getElementById('nav-user').innerHTML = `
           ${meta.avatar_url ? `<img class="nav-avatar" src="${meta.avatar_url}" alt="">` : ''}
           <span>${meta.full_name ?? 'Member'}</span>
         `;
       }
 
-      document.getElementById('sign-out-btn').addEventListener('click', signOut);
+      // Admin link
+      if (amdUser?.role === 'admin') {
+        document.getElementById('admin-link').style.display = 'inline-flex';
+      }
 
+      // Nav auth
+      if (session) {
+        document.getElementById('nav-auth').innerHTML =
+          '<button class="btn btn-ghost btn-sm" id="sign-out-btn">Sign out</button>';
+        document.getElementById('sign-out-btn').addEventListener('click', signOut);
+      } else {
+        document.getElementById('nav-auth').innerHTML =
+          '<button class="btn btn-primary btn-sm" id="sign-in-btn">Sign in</button>';
+        document.getElementById('sign-in-btn').addEventListener('click', promptSignIn);
+      }
+
+      // Theme toggle
       const html   = document.documentElement;
       const toggle = document.getElementById('theme-toggle');
       const saved  = localStorage.getItem('amd-theme') ?? 'light';
@@ -475,7 +248,7 @@
         toggle.textContent = next === 'dark' ? '☀️' : '🌙';
       });
 
-      // ── Resolve post ID ──────────────────────────────────────────
+      // ── Resolve post ──────────────────────────────────────────
       const params = new URLSearchParams(window.location.search);
       const postId = params.get('post');
 
@@ -485,14 +258,10 @@
         return;
       }
 
-      // ── Fetch post ─────────────────────────────────────────────
       const { data: post, error: postErr } = await supabase
         .from('amd_posts')
-        .select(`
-          id, platform, title, body, url, image_url,
-          published_at, imported_at,
-          amd_content_sources!source_id ( label, theme_key, badge_color )
-        `)
+        .select(`id, platform, title, body, url, image_url, published_at, imported_at,
+          amd_content_sources!source_id ( label, theme_key, badge_color )`)
         .eq('id', postId)
         .eq('is_published', true)
         .single();
@@ -503,24 +272,17 @@
         return;
       }
 
-      const source = Array.isArray(post.amd_content_sources)
-        ? post.amd_content_sources[0] : post.amd_content_sources;
-      const cfg = PLATFORM_CONFIG[source?.theme_key?.toLowerCase() ?? post.platform] ?? DEFAULT_CONFIG;
+      const source     = Array.isArray(post.amd_content_sources) ? post.amd_content_sources[0] : post.amd_content_sources;
+      const cfg        = PLATFORM_CONFIG[source?.theme_key?.toLowerCase() ?? post.platform] ?? DEFAULT_CONFIG;
       const badgeColor = source?.badge_color ?? cfg.color;
-
-      document.title = (post.title ?? 'Discussion') + ' — André Maurice Davis';
+      document.title   = (post.title ?? 'Discussion') + ' — André Maurice Davis';
 
       document.getElementById('post-card-wrap').innerHTML = `
         <div class="post-card">
-          ${post.image_url
-            ? `<img class="post-card-image" src="${post.image_url}" alt="" loading="lazy"
-                 onerror="this.style.display='none'">`
-            : ''}
+          ${post.image_url ? `<img class="post-card-image" src="${post.image_url}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
           <div class="post-card-inner">
             <div class="post-card-meta">
-              <span class="post-badge" style="--badge-color:${badgeColor}">
-                <span class="post-badge-dot"></span>${cfg.emoji} ${cfg.label}
-              </span>
+              <span class="post-badge" style="--badge-color:${badgeColor}"><span class="post-badge-dot"></span>${cfg.emoji} ${cfg.label}</span>
               <time class="post-card-time">${relativeTime(post.published_at ?? post.imported_at)}</time>
             </div>
             ${post.title ? `<h1 class="post-card-title">${post.title}</h1>` : ''}
@@ -530,7 +292,7 @@
         </div>
       `;
 
-      // ── Fetch thread ───────────────────────────────────────────
+      // ── Thread ────────────────────────────────────────────────
       const { data: thread } = await supabase
         .from('amd_discussion_threads')
         .select('id, is_open')
@@ -540,192 +302,133 @@
       const threadId = thread?.id ?? null;
       const isOpen   = thread?.is_open ?? true;
 
-      // ── Load & render replies (threaded) ──────────────────────
+      // ── Composer (session-aware) ──────────────────────────────
+      const composerWrap = document.getElementById('composer-wrap');
+      if (!session) {
+        composerWrap.innerHTML = `
+          <div class="signin-prompt">
+            <span>Sign in to join the discussion.</span>
+            <button class="btn btn-primary btn-sm" id="composer-signin">Sign in with Google</button>
+          </div>`;
+        document.getElementById('composer-signin').addEventListener('click', promptSignIn);
+      } else if (!isOpen) {
+        composerWrap.innerHTML = `
+          <div class="signin-prompt">This discussion is closed.</div>`;
+      } else {
+        composerWrap.innerHTML = `
+          <div class="reply-composer">
+            <label for="reply-input">Add to the conversation</label>
+            <textarea id="reply-input" placeholder="Share your thoughts…" maxlength="2000"></textarea>
+            <div class="reply-composer-footer">
+              <span class="reply-composer-note">Replies are reviewed before appearing publicly.</span>
+              <button class="btn btn-primary" id="reply-submit">Submit reply</button>
+            </div>
+            <p class="reply-success" id="reply-success">✓ Reply submitted — it will appear once approved.</p>
+          </div>`;
+
+        document.getElementById('reply-submit').addEventListener('click', async () => {
+          const textarea  = document.getElementById('reply-input');
+          const submitBtn = document.getElementById('reply-submit');
+          const body = textarea.value.trim();
+          if (!body) return;
+          submitBtn.disabled = true; submitBtn.textContent = 'Submitting…';
+
+          let resolvedThreadId = threadId;
+          if (!resolvedThreadId) {
+            const { data: newThread, error: nte } = await supabase
+              .from('amd_discussion_threads')
+              .insert({ post_id: postId, is_open: true })
+              .select('id').single();
+            if (nte || !newThread) {
+              submitBtn.disabled = false; submitBtn.textContent = 'Submit reply';
+              alert('Could not start thread. Please try again.'); return;
+            }
+            resolvedThreadId = newThread.id;
+          }
+
+          const { error: ie } = await supabase
+            .from('amd_discussion_posts')
+            .insert({ thread_id: resolvedThreadId, user_id: amdUser.id, body, status: 'pending' });
+
+          submitBtn.disabled = false; submitBtn.textContent = 'Submit reply';
+          if (ie) { console.error(ie); alert('Something went wrong. Please try again.'); return; }
+          textarea.value = '';
+          const s = document.getElementById('reply-success');
+          s.style.display = 'block';
+          setTimeout(() => { s.style.display = 'none'; }, 5000);
+        });
+      }
+
+      // ── Load replies ──────────────────────────────────────────
       async function loadReplies() {
         if (!threadId) {
-          document.getElementById('reply-list').innerHTML =
-            '<p class="reply-empty">No replies yet. Be the first to start the conversation.</p>';
+          document.getElementById('reply-list').innerHTML = '<p class="reply-empty">No replies yet. Be the first to start the conversation.</p>';
           document.getElementById('reply-count').textContent = '0 replies';
           return;
         }
-
         const { data: replies, error: repErr } = await supabase
           .from('amd_discussion_posts')
-          .select(`
-            id, body, created_at, parent_id, status,
-            amd_users!user_id ( display_name, avatar_url )
-          `)
+          .select(`id, body, created_at, parent_id, status, amd_users!user_id ( display_name, avatar_url )`)
           .eq('thread_id', threadId)
           .eq('status', 'approved')
           .order('created_at', { ascending: true });
 
-        if (repErr) {
-          document.getElementById('reply-list').innerHTML =
-            '<p class="reply-empty">Could not load replies.</p>';
-          return;
-        }
+        if (repErr) { document.getElementById('reply-list').innerHTML = '<p class="reply-empty">Could not load replies.</p>'; return; }
 
         const count = replies?.length ?? 0;
-        document.getElementById('reply-count').textContent =
-          count === 1 ? '1 reply' : `${count} replies`;
+        document.getElementById('reply-count').textContent = count === 1 ? '1 reply' : `${count} replies`;
 
-        if (count === 0) {
-          document.getElementById('reply-list').innerHTML =
-            '<p class="reply-empty">No replies yet. Be the first to start the conversation.</p>';
-          return;
-        }
+        if (count === 0) { document.getElementById('reply-list').innerHTML = '<p class="reply-empty">No replies yet. Be the first to start the conversation.</p>'; return; }
 
-        // Separate top-level vs child replies
         const topLevel = replies.filter(r => !r.parent_id);
         const children = replies.filter(r =>  r.parent_id);
         const childMap = {};
-        children.forEach(c => {
-          if (!childMap[c.parent_id]) childMap[c.parent_id] = [];
-          childMap[c.parent_id].push(c);
-        });
+        children.forEach(c => { if (!childMap[c.parent_id]) childMap[c.parent_id] = []; childMap[c.parent_id].push(c); });
 
         const listEl = document.getElementById('reply-list');
         listEl.innerHTML = topLevel.map(r => {
-          const kids = (childMap[r.id] ?? []).map(c => `
-            <div class="reply-child">
-              ${replyMeta(c)}
-            </div>
-          `).join('');
-
-          return `
-            <div class="reply-item" data-reply-id="${r.id}">
-              ${replyMeta(r)}
-              ${ isOpen ? `<button class="reply-to-btn" data-target="${r.id}">Reply ↳</button>
-                <div class="reply-sub-composer" id="sub-${r.id}">
-                  <textarea placeholder="Reply to this comment…" maxlength="1000"></textarea>
-                  <div class="reply-sub-composer-actions">
-                    <button class="btn btn-primary btn-sm sub-submit" data-parent="${r.id}">Submit</button>
-                    <button class="btn btn-ghost btn-sm sub-cancel" data-target="${r.id}">Cancel</button>
-                  </div>
-                </div>` : ''}
-              ${kids ? `<div class="reply-children">${kids}</div>` : ''}
-            </div>
-          `;
+          const kids = (childMap[r.id] ?? []).map(c => `<div class="reply-child">${replyMeta(c)}</div>`).join('');
+          const replyBtn = (session && isOpen)
+            ? `<button class="reply-to-btn" data-target="${r.id}">Reply ↳</button>
+               <div class="reply-sub-composer" id="sub-${r.id}">
+                 <textarea placeholder="Reply to this comment…" maxlength="1000"></textarea>
+                 <div class="reply-sub-composer-actions">
+                   <button class="btn btn-primary btn-sm sub-submit" data-parent="${r.id}">Submit</button>
+                   <button class="btn btn-ghost btn-sm sub-cancel" data-target="${r.id}">Cancel</button>
+                 </div>
+               </div>` : '';
+          return `<div class="reply-item" data-reply-id="${r.id}">${replyMeta(r)}${replyBtn}${kids ? `<div class="reply-children">${kids}</div>` : ''}</div>`;
         }).join('');
 
-        // Wire reply-to toggles
         listEl.querySelectorAll('.reply-to-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const sub = document.getElementById(`sub-${btn.dataset.target}`);
-            sub?.classList.toggle('open');
-          });
+          btn.addEventListener('click', () => document.getElementById(`sub-${btn.dataset.target}`)?.classList.toggle('open'));
         });
-
-        // Wire cancel buttons
         listEl.querySelectorAll('.sub-cancel').forEach(btn => {
           btn.addEventListener('click', () => {
             const sub = document.getElementById(`sub-${btn.dataset.target}`);
             if (sub) { sub.classList.remove('open'); sub.querySelector('textarea').value = ''; }
           });
         });
-
-        // Wire sub-submit buttons
         listEl.querySelectorAll('.sub-submit').forEach(btn => {
           btn.addEventListener('click', async () => {
             const parentId = btn.dataset.parent;
-            const sub      = document.getElementById(`sub-${parentId}`);
-            const ta       = sub?.querySelector('textarea');
-            const body     = ta?.value.trim();
+            const sub = document.getElementById(`sub-${parentId}`);
+            const ta  = sub?.querySelector('textarea');
+            const body = ta?.value.trim();
             if (!body) return;
-
             btn.disabled = true; btn.textContent = 'Submitting…';
-
-            const { error } = await supabase
-              .from('amd_discussion_posts')
-              .insert({
-                thread_id: threadId,
-                user_id:   window.amdUser.id,
-                body,
-                parent_id: parentId,
-                status:    'pending',
-              });
-
+            const { error } = await supabase.from('amd_discussion_posts')
+              .insert({ thread_id: threadId, user_id: amdUser.id, body, parent_id: parentId, status: 'pending' });
             btn.disabled = false; btn.textContent = 'Submit';
-
-            if (error) {
-              console.error('Sub-reply error:', error);
-              alert('Something went wrong. Please try again.');
-              return;
-            }
-
-            ta.value = '';
-            sub.classList.remove('open');
-            const successEl = document.getElementById('reply-success');
-            successEl.style.display = 'block';
-            setTimeout(() => { successEl.style.display = 'none'; }, 5000);
+            if (error) { console.error(error); alert('Something went wrong. Please try again.'); return; }
+            ta.value = ''; sub.classList.remove('open');
+            const s = document.getElementById('reply-success');
+            if (s) { s.style.display = 'block'; setTimeout(() => { s.style.display = 'none'; }, 5000); }
           });
         });
       }
 
       await loadReplies();
-
-      // ── Composer: disable if thread is closed ──────────────────
-      const textarea  = document.getElementById('reply-input');
-      const submitBtn = document.getElementById('reply-submit');
-
-      if (!isOpen) {
-        textarea.disabled = true;
-        textarea.placeholder = 'This discussion is closed.';
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Closed';
-      }
-
-      // ── Top-level submit ──────────────────────────────────────
-      submitBtn.addEventListener('click', async () => {
-        const body = textarea.value.trim();
-        if (!body) return;
-
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Submitting…';
-
-        let resolvedThreadId = threadId;
-
-        if (!resolvedThreadId) {
-          const { data: newThread, error: newThreadErr } = await supabase
-            .from('amd_discussion_threads')
-            .insert({ post_id: postId, is_open: true })
-            .select('id')
-            .single();
-
-          if (newThreadErr || !newThread) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Submit reply';
-            alert('Could not start thread. Please try again.');
-            return;
-          }
-          resolvedThreadId = newThread.id;
-        }
-
-        const { error: insertErr } = await supabase
-          .from('amd_discussion_posts')
-          .insert({
-            thread_id: resolvedThreadId,
-            user_id:   window.amdUser.id,
-            body,
-            status:    'pending',
-          });
-
-        if (insertErr) {
-          console.error('Reply insert error:', insertErr);
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Submit reply';
-          alert('Something went wrong. Please try again.');
-          return;
-        }
-
-        textarea.value = '';
-        submitBtn.textContent = 'Submit reply';
-        submitBtn.disabled = false;
-        const successEl = document.getElementById('reply-success');
-        successEl.style.display = 'block';
-        setTimeout(() => { successEl.style.display = 'none'; }, 5000);
-      });
-
     })();
   </script>
 
