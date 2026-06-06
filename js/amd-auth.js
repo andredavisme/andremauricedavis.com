@@ -25,7 +25,7 @@ function redirectToPortal() {
 }
 
 /**
- * Call on every protected page.
+ * Call on every protected page (admin.html).
  * Returns the amd_users row for the logged-in user, or redirects to portal.
  */
 export async function requireAuth() {
@@ -62,6 +62,56 @@ export async function requireAuth() {
 
   window.amdUser = user;
   return user;
+}
+
+/**
+ * Call on public pages (index.html, feed.html, thread.html).
+ * Loads session + upserts amd_users row if logged in.
+ * Does NOT redirect if no session — returns null silently.
+ * Use window.amdUser / window.amdSession to drive session-aware UI.
+ */
+export async function optionalAuth() {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    window.amdSession = null;
+    window.amdUser = null;
+    return null;
+  }
+
+  window.amdSession = session;
+
+  // Upsert amd_users row (creates on first login, updates on return)
+  const { data: user, error } = await supabase
+    .from('amd_users')
+    .upsert(
+      {
+        auth_user_id: session.user.id,
+        display_name: session.user.user_metadata?.full_name ?? null,
+        avatar_url: session.user.user_metadata?.avatar_url ?? null,
+        role: 'user',
+        is_active: true,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'auth_user_id', ignoreDuplicates: false }
+    )
+    .select()
+    .single();
+
+  if (error) {
+    console.error('amd_users upsert error:', error);
+  }
+
+  window.amdUser = user;
+  return user;
+}
+
+/**
+ * Redirect to the auth portal, returning to the current page after login.
+ * Use this for inline "Sign in" prompts on public pages.
+ */
+export function promptSignIn() {
+  redirectToPortal();
 }
 
 /**
