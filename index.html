@@ -89,6 +89,10 @@
       border: 1px solid var(--color-border);
     }
     .btn-ghost:hover { background: var(--color-surface-mid); }
+    .btn-primary {
+      background: var(--color-primary); color: #fff;
+    }
+    .btn-primary:hover { background: var(--color-primary-hover); }
     .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.78rem; }
     .theme-toggle {
       background: none; border: 1px solid var(--color-border);
@@ -158,30 +162,9 @@
     .badge-live    { background: #dcfce7; color: #166534; }
     .badge-coming  { background: var(--color-surface-mid); color: var(--color-text-faint); }
     .badge-archived { background: #fef3c7; color: #92400e; }
-
-    /* Auth gate */
-    #auth-gate {
-      position: fixed; inset: 0;
-      background: var(--color-bg);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 1rem;
-      z-index: 999;
-    }
-    #auth-gate .gate-logo {
-      width: 56px; height: 56px;
-      background: var(--color-primary); border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      color: #fff; font-family: var(--font-display); font-size: 1.8rem;
-    }
-    #auth-gate p { color: var(--color-text-muted); font-size: 0.875rem; }
   </style>
 </head>
 <body>
-
-  <div id="auth-gate">
-    <div class="gate-logo">A</div>
-    <p>Checking your session…</p>
-  </div>
 
   <nav class="nav">
     <a class="nav-brand" href="/">
@@ -191,13 +174,14 @@
     <div class="nav-actions">
       <div class="nav-user" id="nav-user"></div>
       <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode">🌙</button>
-      <button class="btn btn-ghost btn-sm" id="sign-out-btn">Sign out</button>
+      <!-- sign-in / sign-out rendered by JS based on session -->
+      <div id="nav-auth"></div>
     </div>
   </nav>
 
   <div class="hero">
-    <h1 class="hero-title">Welcome</h1>
-    <p class="hero-sub">Select a project below to get started.</p>
+    <h1 class="hero-title">André Maurice Davis</h1>
+    <p class="hero-sub">A consolidated space for community, content, and conversation.</p>
   </div>
 
   <div class="projects" id="projects-grid">
@@ -205,24 +189,29 @@
   </div>
 
   <script type="module">
-    import { requireAuth, signOut, supabase } from './js/amd-auth.js';
+    import { optionalAuth, signOut, promptSignIn, supabase } from './js/amd-auth.js';
 
     (async () => {
-      const user = await requireAuth();
-      if (!user) return;
+      const user = await optionalAuth();
+      const session = window.amdSession;
+      const meta = session?.user?.user_metadata;
 
-      document.getElementById('auth-gate').style.display = 'none';
-
-      // Nav user
-      const meta = window.amdSession?.user?.user_metadata;
-      if (meta) {
-        document.getElementById('nav-user').innerHTML = `
-          ${meta.avatar_url ? `<img class="nav-avatar" src="${meta.avatar_url}" alt="">` : ''}
-          <span>${meta.full_name ?? 'Member'}</span>
-        `;
+      // Nav: show avatar + name + sign out if logged in, otherwise sign in button
+      if (session) {
+        if (meta?.avatar_url) {
+          document.getElementById('nav-user').innerHTML = `
+            <img class="nav-avatar" src="${meta.avatar_url}" alt="">
+            <span>${meta.full_name ?? 'Member'}</span>
+          `;
+        }
+        document.getElementById('nav-auth').innerHTML =
+          '<button class="btn btn-ghost btn-sm" id="sign-out-btn">Sign out</button>';
+        document.getElementById('sign-out-btn').addEventListener('click', signOut);
+      } else {
+        document.getElementById('nav-auth').innerHTML =
+          '<button class="btn btn-primary btn-sm" id="sign-in-btn">Sign in</button>';
+        document.getElementById('sign-in-btn').addEventListener('click', promptSignIn);
       }
-
-      document.getElementById('sign-out-btn').addEventListener('click', signOut);
 
       // Theme
       const html   = document.documentElement;
